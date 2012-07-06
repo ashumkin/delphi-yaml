@@ -433,7 +433,7 @@ type
  * @param[in,out]   token   A token object.
  *)
 
-procedure _yaml_token_delete(token: PYamlToken); cdecl; external;
+procedure _yaml_token_delete(var token: TYamlToken); cdecl; external;
 
 (** @} *)
 
@@ -474,7 +474,100 @@ type TYamlEventType = (
 );
 
 (** The event structure. *)
-type PYamlEvent = type Pointer;
+type
+  TYamlEventData = record
+
+    (** The event type. *)
+    case type_: TYamlEventType of
+
+    (** The event data. *)
+
+      (** The stream parameters (for @c YAML_STREAM_START_EVENT). *)
+      yamlStreamStartEvent: (
+        (** The document encoding. *)
+        stream_start_encoding: TYamlEncoding;
+      );
+
+      (** The document parameters (for @c YAML_DOCUMENT_START_EVENT). *)
+      yamlDocumentStartEvent: (
+        (** The version directive. *)
+        document_start_version_directive: PYamlVersionDirective;
+
+        (** The list of tag directives. *)
+          (** The beginning of the tag directives list. *)
+          document_start_tag_directives_start: PYamlTagDirective;
+          (** The end of the tag directives list. *)
+          document_start_tag_directives_end: PYamlTagDirective;
+
+        (** Is the document indicator implicit? *)
+        document_start_implicit: Integer;
+      );
+
+      (** The document end parameters (for @c YAML_DOCUMENT_END_EVENT). *)
+      yamlDocumentEndEvent: (
+        (** Is the document end indicator implicit? *)
+        document_end_implicit: Integer;
+      );
+
+      (** The alias parameters (for @c YAML_ALIAS_EVENT). *)
+      yamlAliasEvent: (
+        (** The anchor. *)
+        alias_anchor: PYamlChar;
+      );
+
+      (** The scalar parameters (for @c YAML_SCALAR_EVENT). *)
+      yamlScalarEvent: (
+        (** The anchor. *)
+        scalar_anchor: PYamlChar;
+        (** The tag. *)
+        scalar_tag: PYamlChar;
+        (** The scalar value. *)
+        scalar_value: PYamlChar;
+        (** The length of the scalar value. *)
+        scalar_length: Integer;
+        (** Is the tag optional for the plain style? *)
+        scalar_plain_implicit: Integer;
+        (** Is the tag optional for any non-plain style? *)
+        scalar_quoted_implicit: Integer;
+        (** The scalar style. *)
+        scalar_style: TYamlScalarStyle;
+      );
+
+      (** The sequence parameters (for @c YAML_SEQUENCE_START_EVENT). *)
+      yamlSequenceStartEvent: (
+        (** The anchor. *)
+        sequence_start_anchor: PYamlChar;
+        (** The tag. *)
+        sequence_start_tag: PYamlChar;
+        (** Is the tag optional? *)
+        sequence_start_implicit: Integer;
+        (** The sequence style. *)
+        sequence_start_style: TYamlSequenceStyle;
+      );
+
+      (** The mapping parameters (for @c YAML_MAPPING_START_EVENT). *)
+      yamlMappingStartEvent: (
+        (** The anchor. *)
+        mapping_start_anchor: PYamlChar;
+        (** The tag. *)
+        mapping_start_tag: PYamlChar;
+        (** Is the tag optional? *)
+        mapping_start_implicit: Integer;
+        (** The mapping style. *)
+        mapping_start_style: TYamlMappingStyle;
+      );
+
+  end;
+  TYamlEvent = record
+    data: TYamlEventData;
+
+    (** The beginning of the event. *)
+    start_mark: TYamlMark;
+    (** The end of the event. *)
+    end_mark: TYamlMark;
+
+  end;
+  PYamlEvent = ^TYamlEvent;
 
 (**
  * Create the STREAM-START event.
@@ -485,7 +578,7 @@ type PYamlEvent = type Pointer;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_stream_start_event_initialize(event : PYamlEvent;
+function _yaml_stream_start_event_initialize(out event : TYamlEvent;
   encoding: TYamlEncoding): Integer; cdecl; external;
 
 (**
@@ -496,7 +589,7 @@ function _yaml_stream_start_event_initialize(event : PYamlEvent;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_stream_end_event_initialize(event: PYamlEvent): Integer;
+function _yaml_stream_end_event_initialize(out event: TYamlEvent): Integer;
   cdecl; external;
 
 (**
@@ -518,7 +611,7 @@ function _yaml_stream_end_event_initialize(event: PYamlEvent): Integer;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_document_start_event_initialize(event: PYamlEvent;
+function _yaml_document_start_event_initialize(out event: TYamlEvent;
   version_directive: PYamlVersionDirective;
   tag_directives_start, tag_directives_end: PYamlTagDirective;
   implicit: Integer): Integer; cdecl; external;
@@ -535,7 +628,7 @@ function _yaml_document_start_event_initialize(event: PYamlEvent;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_document_end_event_initialize(event: PYamlEvent;
+function _yaml_document_end_event_initialize(out event: TYamlEvent;
   implicit: Integer): Integer; cdecl; external;
 
 (**
@@ -547,7 +640,7 @@ function _yaml_document_end_event_initialize(event: PYamlEvent;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_alias_event_initialize(event: PYamlEvent;
+function _yaml_alias_event_initialize(out event: TYamlEvent;
   anchor: PYamlChar): Integer; cdecl; external;
 
 (**
@@ -572,7 +665,7 @@ function _yaml_alias_event_initialize(event: PYamlEvent;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_scalar_event_initialize(event: PYamlEvent;
+function _yaml_scalar_event_initialize(out event: TYamlEvent;
   anchor, tag, value: PYamlChar;
   length, plain_implicit, quoted_implicit: Integer;
   style: TYamlScalarStyle): Integer; cdecl; external;
@@ -593,7 +686,7 @@ function _yaml_scalar_event_initialize(event: PYamlEvent;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_sequence_start_event_initialize(event: PYamlEvent;
+function _yaml_sequence_start_event_initialize(out event: TYamlEvent;
   anchor, tag: PYamlChar; implicit: Integer;
   style: TYamlSequenceStyle): Integer; cdecl; external;
 
@@ -605,7 +698,7 @@ function _yaml_sequence_start_event_initialize(event: PYamlEvent;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_sequence_end_event_initialize(event: PYamlEvent): Integer;
+function _yaml_sequence_end_event_initialize(out event: TYamlEvent): Integer;
   cdecl; external;
 
 (**
@@ -624,7 +717,7 @@ function _yaml_sequence_end_event_initialize(event: PYamlEvent): Integer;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_mapping_start_event_initialize(event: PYamlEvent;
+function _yaml_mapping_start_event_initialize(out event: TYamlEvent;
   anchor, tag: PYamlChar; implicit: Integer;
   style: TYamlMappingStyle): Integer; cdecl; external;
 
@@ -636,7 +729,7 @@ function _yaml_mapping_start_event_initialize(event: PYamlEvent;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_mapping_end_event_initialize(event: PYamlEvent): Integer;
+function _yaml_mapping_end_event_initialize(out event: TYamlEvent): Integer;
   cdecl; external;
 
 (**
@@ -645,7 +738,7 @@ function _yaml_mapping_end_event_initialize(event: PYamlEvent): Integer;
  * @param[in,out]   event   An event object.
  *)
 
-procedure _yaml_event_delete(event: PYamlEvent); cdecl; external;
+procedure _yaml_event_delete(var event: TYamlEvent); cdecl; external;
 
 (** @} *)
 
