@@ -1,0 +1,11 @@
+syntax: glob
+.deps/
+.libs/
+*.i
+*.zip
+*.lib
+*.lo
+*.dcu
+*.7z
+Makefile.*
+Makefile
