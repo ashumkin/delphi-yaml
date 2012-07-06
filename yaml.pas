@@ -8,15 +8,12 @@ unit YAML;
 
 interface
 
+uses
+  SysUtils, Classes;
+
+
 type
   UString = WideString; // change to UnicodeString on XE2
-
-  IYamlVersion = interface;
-
-  CoYaml = class
-    class function Version: IYamlVersion;
-
-  end;
 
   (**
    * @defgroup version Version Information
@@ -50,22 +47,96 @@ type
 
   (** @} *)
 
+  (**
+   * @defgroup basic Basic Types
+   * @{
+   *)
+
+  (** The character type (UTF-8 octet). *)
+  // yaml_char_t (converted to PYamlChar)
+
+  (** The version directive data. *)
+  IYamlVersionDirective = interface
+  ['{90DD4239-7F44-4B5A-B1D2-F5DCE8C1D41A}']
+    function GetMajor: Integer;
+    function GetMinor: Integer;
+    (** The major version number. *)
+    property Major: Integer read GetMajor;
+    (** The minor version number. *)
+    property Minor: Integer read GetMinor;
+  end;
+
+  (** The tag directive data. *)
+  IYamlTagDirective = interface
+  ['{C97DAEAC-9F62-4001-A23F-EF27ED5BF48D}']
+    function GetHandle: UString;
+    function GetPrefix: UString;
+    (** The tag handle. *)
+    property Handle: UString read GetHandle;
+    (** The tag prefix. *)
+    property Prefix: UString read GetPrefix;
+  end;
+
+  (** The stream encoding. *)
+  TYamlEncoding = (
+    (** Let the parser choose the encoding. *)
+    yamlAnyEncoding,
+    (** The default UTF-8 encoding. *)
+    yamlUtf8Encoding,
+    (** The UTF-16-LE encoding with BOM. *)
+    yamlUtf16leEncoding,
+    (** The UTF-16-BE encoding with BOM. *)
+    yamlUtf16beEncoding
+  );
+
+  (** Line break types. *)
+
+  TYamlBreak = (
+    (** Let the parser choose the break type. *)
+    yamlAnyBreak,
+    (** Use CR for line breaks (Mac style). *)
+    yamlCrBreak,
+    (** Use LN for line breaks (Unix style). *)
+    yamlLnBreak,
+    (** Use CR LN for line breaks (DOS style). *)
+    yamlCrLnBreak
+  );
+
+  (** Many bad things could happen with the parser and emitter. *)
+  EYamlError = class(Exception);
+  (** No error is produced. *)
+  // no error, no exception
+
+  (** Cannot allocate or reallocate a block of memory. *)
+  EYamlMemoryError = class(EYamlError);
+
+  (** Cannot read or decode the input stream. *)
+  EYamlReaderError = class(EYamlError);
+  (** Cannot scan the input stream. *)
+  EYamlScannerError = class(EYamlError);
+  (** Cannot parse the input stream. *)
+  EYamlParserError = class(EYamlError);
+  (** Cannot compose a YAML document. *)
+  EYamlComposerError = class(EYamlError);
+
+  (** Cannot write to the output stream. *)
+  EYamlWriterError = class(EYamlError);
+  (** Cannot emit a YAML stream. *)
+  EYamlEmitterError = class(EYamlError);
+
+  (** The pointer position. *)
+  // yaml_mark_t
+
+  (** @} *)
+
+
+
+  CoYaml = class
+    class function Version: IYamlVersion;
+    // class function VersionDirective(Major, Minor: Integer): IYamlVersionDirective;
+  end;
 
 implementation
-
-uses
-  SysUtils, Classes;
-
-(* *)
-{$L 'api.obj'}
-{$L 'dumper.obj'}
-{$L 'emitter.obj'}
-{$L 'loader.obj'}
-{$L 'parser.obj'}
-{$L 'reader.obj'}
-{$L 'scanner.obj'}
-{$L 'writer.obj'}
-(* *)
 
 (** The character type (UTF-8 octet). *)
 type
@@ -130,29 +201,11 @@ type
   PYamlTagDirective = ^TYamlTagDirective;
 
 (** The stream encoding. *)
-type TYamlEncoding = (
-  (** Let the parser choose the encoding. *)
-  yamlAnyEncoding,
-  (** The default UTF-8 encoding. *)
-  yamlUtf8Encoding,
-  (** The UTF-16-LE encoding with BOM. *)
-  yamlUtf16leEncoding,
-  (** The UTF-16-BE encoding with BOM. *)
-  yamlUtf16beEncoding
-);
+// type TYamlEncoding defined in interface
 
 (** Line break types. *)
 
-type TYamlBreak = (
-  (** Let the parser choose the break type. *)
-  yamlAnyBreak,
-  (** Use CR for line breaks (Mac style). *)
-  yamlCrBreak,
-  (** Use LN for line breaks (Unix style). *)
-  yamlLnBreak,
-  (** Use CR LN for line breaks (DOS style). *)
-  yamlCrLnBreak
-);
+// type TYamlBreak defined in interface
 
 (** Many bad things could happen with the parser and emitter. *)
 type TYamlErrorType = (
@@ -178,7 +231,18 @@ type TYamlErrorType = (
 );
 
 (** The pointer position. *)
-// yaml_mark_t
+type
+  TYamlMark = record
+    (** The position index. *)
+    index: Integer;
+
+    (** The position line. *)
+    line: Integer;
+
+    (** The position column. *)
+    column: Integer;
+  end;
+  PYamlMark = ^TYamlMark;
 
 (** @} *)
 
@@ -291,7 +355,77 @@ type TYamlTokenType = (
 );
 
 (** The token structure. *)
-type PYamlToken = type Pointer;
+type
+  TYamlTokenData = record
+
+    (** The token type. *)
+    case type_: TYamlTokenType of
+
+    (** The token data. *)
+
+      (** The stream start (for @c YAML_STREAM_START_TOKEN). *)
+      yamlStreamStartToken: (
+        (** The stream encoding. *)
+        stream_start_encoding: TYamlEncoding;
+      );
+
+      (** The alias (for @c YAML_ALIAS_TOKEN). *)
+      yamlAliasToken: (
+        (** The alias value. *)
+        alias_value: PYamlChar;
+      );
+
+      (** The anchor (for @c YAML_ANCHOR_TOKEN). *)
+      yamlAnchorToken: (
+        (** The anchor value. *)
+        anchor_value: PYamlChar;
+      );
+
+      (** The tag (for @c YAML_TAG_TOKEN). *)
+      yamlTagToken: (
+          (** The tag handle. *)
+          tag_handle: PYamlChar;
+          (** The tag suffix. *)
+          tag_suffix: PYamlChar;
+      );
+
+      (** The scalar value (for @c YAML_SCALAR_TOKEN). *)
+      yamlScalarToken: (
+          (** The scalar value. *)
+          scalar_value: PYamlChar;
+          (** The length of the scalar value. *)
+          scalar_length: Integer;
+          (** The scalar style. *)
+          scalar_style: TYamlScalarStyle;
+      );
+
+      (** The version directive (for @c YAML_VERSION_DIRECTIVE_TOKEN). *)
+      yamlVersionDirectiveToken: (
+          (** The major version number. *)
+          version_directive_major: Integer;
+          (** The minor version number. *)
+          version_directive_minor: Integer;
+      );
+
+      (** The tag directive (for @c YAML_TAG_DIRECTIVE_TOKEN). *)
+      yamlTagDirectiveToken: (
+          (** The tag handle. *)
+          tag_directive_handle: PYamlChar;
+          (** The tag prefix. *)
+          tag_directive_prefix: PYamlChar;
+      );
+
+  end;
+  TYamlToken = record
+    data: TYamlTokenData;
+
+    (** The beginning of the token. *)
+    start_mark: TYamlMark;
+    (** The end of the token. *)
+    end_mark: TYamlMark;
+
+  end;
+  type PYamlToken = ^TYamlToken;
 
 (**
  * Free any memory allocated for a token object.
@@ -1365,5 +1499,16 @@ function  _yaml_string_join(var a_start, a_pointer, a_end, b_start, b_pointer, b
 
 function _yaml_stack_extend(var start, top, end_ : Pointer) : Integer; cdecl; external;
 function _yaml_queue_extend(var start, head, tail, end_ : Pointer): Integer; cdecl; external;
+
+(* *)
+{$L 'api.obj'}
+{$L 'dumper.obj'}
+{$L 'emitter.obj'}
+{$L 'loader.obj'}
+{$L 'parser.obj'}
+{$L 'reader.obj'}
+{$L 'scanner.obj'}
+{$L 'writer.obj'}
+(* *)
 
 end.
