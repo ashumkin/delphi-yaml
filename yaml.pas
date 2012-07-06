@@ -8,9 +8,47 @@ unit YAML;
 
 interface
 
-(** The character type (UTF-8 octet). *)
-type PYamlChar = type PAnsiChar;
+type
+  UString = WideString; // change to UnicodeString on XE2
 
+  IYamlVersion = interface;
+
+  CoYaml = class
+    class function Version: IYamlVersion;
+
+  end;
+
+  (**
+   * @defgroup version Version Information
+   * @{
+   *)
+
+  IYamlVersion = interface
+  ['{0B1F5CC2-3E4C-4D4C-922B-6E3F1EB871D8}']
+
+  (**
+   * Get the library version as a string.
+   *
+   * @returns The function returns the pointer to a static string of the form
+   * @c "X.Y.Z", where @c X is the major version number, @c Y is a minor version
+   * number, and @c Z is the patch version number.
+   *)
+
+    function Get_String: string;
+
+  (**
+   * Get the library version numbers.
+   *
+   * @param[out]      major   Major version number.
+   * @param[out]      minor   Minor version number.
+   * @param[out]      patch   Patch version number.
+   *)
+
+    procedure Get(var major, minor, patch: Integer);
+
+  end;
+
+  (** @} *)
 
 
 implementation
@@ -28,6 +66,10 @@ uses
 {$L 'scanner.obj'}
 {$L 'writer.obj'}
 (* *)
+
+(** The character type (UTF-8 octet). *)
+type
+  PYamlChar = type PAnsiChar;
 
 //-//-//-//-//-//-//-//-//-//
 // yaml.h
@@ -1190,6 +1232,33 @@ function _yaml_emitter_dump(emitter: PYamlEmitter; document: PYamlDocument):
 function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
 (** @} *)
+
+//-//-//-//-//-//-//-//-//
+
+// Thick binding
+
+type
+  TYamlVersionImpl = class(TInterfacedObject, IYamlVersion)
+  public
+    function Get_String: string;
+    procedure Get(var major, minor, patch: Integer);
+  end;
+
+class function CoYaml.Version: IYamlVersion;
+begin
+  Result := TYamlVersionImpl.Create;
+end;
+
+function TYamlVersionImpl.Get_String: string;
+begin
+  Result := _yaml_get_version_string;
+end;
+
+procedure TYamlVersionImpl.Get(var major, minor, patch: Integer);
+begin
+  _yaml_get_version(major, minor, patch);
+end;
+
 
 
 //-//-//-//-//-//-//-//-//

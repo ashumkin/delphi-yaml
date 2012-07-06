@@ -9,3 +9,6 @@ syntax: glob
 *.7z
 Makefile.*
 Makefile
+*.dof
+*.cfg
+*.exe
