@@ -270,36 +270,36 @@ type
 
       (** The tag (for @c YAML_TAG_TOKEN). *)
       yamlTagToken: (
-          (** The tag handle. *)
-          tag_handle: PYamlChar;
-          (** The tag suffix. *)
-          tag_suffix: PYamlChar;
+        (** The tag handle. *)
+        tag_handle: PYamlChar;
+        (** The tag suffix. *)
+        tag_suffix: PYamlChar;
       );
 
       (** The scalar value (for @c YAML_SCALAR_TOKEN). *)
       yamlScalarToken: (
-          (** The scalar value. *)
-          scalar_value: PYamlChar;
-          (** The length of the scalar value. *)
-          scalar_length: Integer;
-          (** The scalar style. *)
-          scalar_style: TYamlScalarStyle;
+        (** The scalar value. *)
+        scalar_value: PYamlChar;
+        (** The length of the scalar value. *)
+        scalar_length: Integer;
+        (** The scalar style. *)
+        scalar_style: TYamlScalarStyle;
       );
 
       (** The version directive (for @c YAML_VERSION_DIRECTIVE_TOKEN). *)
       yamlVersionDirectiveToken: (
-          (** The major version number. *)
-          version_directive_major: Integer;
-          (** The minor version number. *)
-          version_directive_minor: Integer;
+        (** The major version number. *)
+        version_directive_major: Integer;
+        (** The minor version number. *)
+        version_directive_minor: Integer;
       );
 
       (** The tag directive (for @c YAML_TAG_DIRECTIVE_TOKEN). *)
       yamlTagDirectiveToken: (
-          (** The tag handle. *)
-          tag_directive_handle: PYamlChar;
-          (** The tag prefix. *)
-          tag_directive_prefix: PYamlChar;
+        (** The tag handle. *)
+        tag_directive_handle: PYamlChar;
+        (** The tag prefix. *)
+        tag_directive_prefix: PYamlChar;
       );
 
   end;
@@ -751,7 +751,38 @@ type
   PYamlNode = ^TYamlNode;
 
 (** The document structure. *)
-type PYamlDocument = type Pointer;
+type
+  TYamlDocument = record
+
+    (** The document nodes. *)
+      (** The beginning of the stack. *)
+      nodes_start: PYamlNode;
+      (** The end of the stack. *)
+      nodes_end: PYamlNode;
+      (** The top of the stack. *)
+      nodes_top: PYamlNode;
+
+    (** The version directive. *)
+    version_directive: TYamlVersionDirective;
+
+    (** The list of tag directives. *)
+      (** The beginning of the tag directives list. *)
+      tag_directives_start: PYamlTagDirective;
+      (** The end of the tag directives list. *)
+      tag_directives_end: PYamlTagDirective;
+
+    (** Is the document start indicator implicit? *)
+    start_implicit: Integer;
+    (** Is the document end indicator implicit? *)
+    end_implicit: Integer;
+
+    (** The beginning of the document. *)
+    start_mark: TYamlMark;
+    (** The end of the document. *)
+    end_mark: TYamlMark;
+
+  end;
+  PYamlDocument = ^TYamlDocument;
 
 (**
  * Create a YAML document.
@@ -771,7 +802,7 @@ type PYamlDocument = type Pointer;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_document_initialize(document: PYamlDocument;
+function _yaml_document_initialize(out document: TYamlDocument;
   version_directive: PYamlVersionDirective;
   tag_directives_start, tag_directives_end: PYamlTagDirective;
   start_implicit, end_implicit: Integer): Integer; cdecl; external;
@@ -782,7 +813,7 @@ function _yaml_document_initialize(document: PYamlDocument;
  * @param[in,out]   document        A document object.
  *)
 
-procedure _yaml_document_delete(document: PYamlDocument); cdecl; external;
+procedure _yaml_document_delete(var document: TYamlDocument); cdecl; external;
 
 (**
  * Get a node of a YAML document.
@@ -832,7 +863,7 @@ function _yaml_document_get_root_node(document: PYamlDocument): PYamlNode;
  * @returns the node id or @c 0 on error.
  *)
 
-function _yaml_document_add_scalar(document: PYamlDocument;
+function _yaml_document_add_scalar(var document: TYamlDocument;
   tag, value: PYamlChar; length: Integer; style: TYamlScalarStyle):
   Integer; cdecl; external;
 
@@ -848,7 +879,7 @@ function _yaml_document_add_scalar(document: PYamlDocument;
  * @returns the node id or @c 0 on error.
  *)
 
-function _yaml_document_add_sequence(document: PYamlDocument;
+function _yaml_document_add_sequence(var document: TYamlDocument;
   tag: PYamlChar; style: TYamlScalarStyle): Integer; cdecl; external;
 
 (**
@@ -863,7 +894,7 @@ function _yaml_document_add_sequence(document: PYamlDocument;
  * @returns the node id or @c 0 on error.
  *)
 
-function _yaml_document_add_mapping(document: PYamlDocument;
+function _yaml_document_add_mapping(var document: TYamlDocument;
   tag: PYamlChar; style: TYamlMappingStyle): Integer; cdecl; external;
 
 (**
@@ -876,7 +907,7 @@ function _yaml_document_add_mapping(document: PYamlDocument;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_document_append_sequence_item(document: PYamlDocument;
+function _yaml_document_append_sequence_item(var document: TYamlDocument;
   sequence, item: Integer): Integer; cdecl; external;
 
 (**
@@ -890,7 +921,7 @@ function _yaml_document_append_sequence_item(document: PYamlDocument;
  * @returns @c 1 if the function succeeded, @c 0 on error.
  *)
 
-function _yaml_document_append_mapping_pair(document: PYamlDocument;
+function _yaml_document_append_mapping_pair(var document: TYamlDocument;
   mapping, key, value: Integer): Integer; cdecl; external;
 
 (** @} *)
@@ -925,7 +956,21 @@ type TYamlReadHandler = function(var data; buffer: PAnsiChar;
  * This structure holds information about a potential simple key.
  *)
 
-// yaml_simple_key_t
+type
+  TYamlSimpleKey = record
+    (** Is a simple key possible? *)
+    possible: Integer;
+
+    (** Is a simple key required? *)
+    required: Integer;
+
+    (** The number of the token. *)
+    token_number: Integer;
+
+    (** The position mark. *)
+    mark: TYamlMark;
+  end;
+  PYamlSimpleKey = ^TYamlSimpleKey;
 
 (**
  * The states of the parser.
@@ -985,7 +1030,16 @@ type TYamlParserState = (
  * This structure holds aliases data.
  *)
 
-// yaml_alias_data_s
+type
+  TYamlAliasData = record
+    (** The anchor. *)
+    anchor: PYamlChar;
+    (** The node id. *)
+    index: Integer;
+    (** The anchor mark. *)
+    mark: TYamlMark;
+  end;
+  PYamlAliasData = ^TYamlAliasData;
 
 (**
  * The parser structure.
@@ -1408,6 +1462,9 @@ function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
 (** @} *)
 
+procedure _yaml_delphibridge_getsizes(var yaml_parser_size,
+  yaml_emitter_size: Integer); cdecl; external;
+
 implementation
 
 //-//-//-//-//-//-//-//-//
@@ -1524,6 +1581,7 @@ function _yaml_queue_extend(var start, head, tail, end_ : Pointer): Integer; cde
 {$L 'reader.obj'}
 {$L 'scanner.obj'}
 {$L 'writer.obj'}
+{$L 'delphibridge.obj'}
 (* *)
 
 end.
