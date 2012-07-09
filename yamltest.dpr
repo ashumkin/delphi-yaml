@@ -3,10 +3,11 @@ program yamltest;
 {$APPTYPE CONSOLE}
 
 uses
-  yaml in 'yaml.pas',
+  Yaml in 'yaml.pas',
+  YamlThin in 'yamlthin.pas',
   SysUtils;
 
 begin
-  WriteLn(CoYaml.Version.Get_String);
+  WriteLn(YamlVersion.AsString);
   ReadLn;
 end.
