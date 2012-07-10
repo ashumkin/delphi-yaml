@@ -1131,8 +1131,7 @@ end;
 type
   TYamlTagDirectiveImpl = class(TInterfacedObject, IYamlTagDirective)
   private
-    FHandle, FPrefix: UTF8String; // holds references
-    FTagDirective: TYamlTagDirective;
+    FHandle, FPrefix: YamlString;
   public
     constructor Create(const Handle, Prefix: YamlString); overload;
     constructor Create(TagDirective: PYamlTagDirective); overload;
@@ -1146,10 +1145,8 @@ type
 constructor TYamlTagDirectiveImpl.Create(const Handle, Prefix: YamlString);
 begin
   inherited Create;
-  FHandle := UTF8Encode(Handle);
-  FPrefix := UTF8Decode(Prefix);
-  FTagDirective.handle := PYamlChar(FHandle);
-  FTagDirective.prefix := PYamlChar(FPrefix);
+  FHandle := Handle;
+  FPrefix := Prefix;
 end;
 
 constructor TYamlTagDirectiveImpl.Create(TagDirective: PYamlTagDirective);
@@ -1157,10 +1154,8 @@ begin
   if not Assigned(TagDirective) then
     raise ERangeError.Create('TYamlTagDirectiveImpl.Create(PYamlTagDirective): TagDirective = nil');
   inherited Create;
-  FHandle := UTF8String(TagDirective.handle);
-  FPrefix := UTF8String(TagDirective.prefix);
-  FTagDirective.handle := PYamlChar(FHandle);
-  FTagDirective.prefix := PYamlChar(FPrefix);
+  FHandle := UTF8Decode(TagDirective.handle);
+  FPrefix := UTF8Decode(TagDirective.prefix);
 end;
 
 constructor TYamlTagDirectiveImpl.Create(const TagDirective: IYamlTagDirective);
@@ -1177,12 +1172,12 @@ end;
 
 function TYamlTagDirectiveImpl.GetHandle: YamlString;
 begin
-  Result := UTF8Decode(FHandle);
+  Result := FHandle;
 end;
 
 function TYamlTagDirectiveImpl.GetPrefix: YamlString;
 begin
-  Result := UTF8Decode(FPrefix);
+  Result := FPrefix;
 end;
 
 type
@@ -1428,7 +1423,7 @@ type
     property EndMark: IYamlMark read GetEndMark;
   end;
 
-constructor TYamlEventImpl.Create(var Event: PYamlEvent);
+constructor TYamlEventImpl.Create(out Event: PYamlEvent);
 begin
   inherited Create;
   Event := @FEvent;
@@ -1633,8 +1628,9 @@ var
   InternalVersionDirective: TYamlVersionDirective;
   InternalVersionDirectivePtr: PYamlVersionDirective;
   InternalTagDirectives: array of TYamlTagDirective;
+  InternalTagDirectivesStr: array of YamlString;
   InternalTagDirectiveStart, InternalTagDirectiveEnd: PYamlTagDirective;
-  i, L: Integer;
+  i, j, L: Integer;
 begin
   InternalVersionDirectivePtr := nil;
   if Assigned(VersionDirective) then
@@ -1649,12 +1645,116 @@ begin
   L := Length(TagDirectives);
   if L <> 0 then
   begin
-    // I'm here
+    SetLength(InternalTagDirectives, L + 1);
+    SetLength(InternalTagDirectivesStr, L * 2);
+    j := 0;
+    for i := 0 to L - 1 do
+      if Assigned(TagDirectives[i]) then
+      begin
+        InternalTagDirectivesStr[j * 2] := UTF8Encode(TagDirectives[i].Handle);
+        InternalTagDirectivesStr[j * 2 + 1] := UTF8Encode(TagDirectives[i].Prefix);
+        InternalTagDirectives[j].handle := PYamlChar(InternalTagDirectivesStr[j * 2]);
+        InternalTagDirectives[j].prefix := PYamlChar(InternalTagDirectivesStr[j * 2 + 1]);
+        Inc(j);
+      end;
+    InternalTagDirectiveStart := @(InternalTagDirectives[0]);
+    InternalTagDirectiveEnd := @(InternalTagDirectives[j]);
   end;
 
   Result := TYamlEventImpl.Create(NewEvent);
-  if _yaml_document_start_event_initialize(NewEvent^) <> 0 then
+  if _yaml_document_start_event_initialize(NewEvent^,
+    InternalVersionDirectivePtr,
+    InternalTagDirectiveStart,
+    InternalTagDirectiveEnd,
+    Integer(Implicit)) <> 0 then
     raise EYamlMemoryError.Create('YamlEventDocumentStart.Create: out of memory');
+end;
+
+class function YamlEventDocumentEnd.Create(Implicit: Boolean): IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  if _yaml_document_end_event_initialize(NewEvent^, Integer(Implicit)) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventDocumentEnd.Create: out of memory');
+end;
+
+class function YamlEventAlias.Create(const Anchor: YamlString): IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+  InternalAnchor: UTF8String;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  InternalAnchor := UTF8Encode(Anchor);
+  if _yaml_alias_event_initialize(NewEvent^, PYamlChar(InternalAnchor)) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventAlias.Create: out of memory');
+end;
+
+class function YamlEventScalar.Create(const Anchor, Tag, Value: YamlString;
+  PlainImplicit, QuotedImplicit: Boolean;
+  Style: TYamlScalarStyle): IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+  InternalAnchor, InternalTag, InternalValue: UTF8String;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  InternalAnchor := UTF8Encode(Anchor);
+  InternalTag := UTF8Encode(Tag);
+  InternalValue := UTF8Encode(Value);
+  if _yaml_scalar_event_initialize(NewEvent^,
+    PYamlChar(InternalAnchor), PYamlChar(InternalTag),
+    PYamlChar(InternalValue), Length(InternalValue),
+    Integer(PlainImplicit), Integer(QuotedImplicit),
+    Style) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventScalar.Create: out of memory');
+end;
+
+class function YamlEventSequenceStart.Create(const Anchor, Tag: YamlString;
+  Implicit: Boolean; Style: TYamlSequenceStyle): IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+  InternalAnchor, InternalTag: UTF8String;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  InternalAnchor := UTF8Encode(Anchor);
+  InternalTag := UTF8Encode(Tag);
+  if _yaml_sequence_start_event_initialize(NewEvent^,
+    PYamlChar(InternalAnchor), PYamlChar(InternalTag),
+    Integer(Implicit), Style) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventSequenceStart.Create: out of memory');
+end;
+
+class function YamlEventSequenceEnd.Create: IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  if _yaml_sequence_end_event_initialize(NewEvent^) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventSequenceEnd.Create: out of memory');
+end;
+
+class function YamlEventMappingStart.Create(const Anchor, Tag: YamlString;
+  Implicit: Boolean; Style: TYamlMappingStyle): IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+  InternalAnchor, InternalTag: UTF8String;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  InternalAnchor := UTF8Encode(Anchor);
+  InternalTag := UTF8Encode(Tag);
+  if _yaml_mapping_start_event_initialize(NewEvent^,
+    PYamlChar(InternalAnchor), PYamlChar(InternalTag),
+    Integer(Implicit), Style) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventMappingStart.Create: out of memory');
+end;
+
+class function YamlEventMappingEnd.Create: IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  if _yaml_mapping_end_event_initialize(NewEvent^) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventMappingEnd.Create: out of memory');
 end;
 
 end.
