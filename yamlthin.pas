@@ -320,7 +320,7 @@ type
  * @param[in,out]   token   A token object.
  *)
 
-procedure _yaml_token_delete(var token: TYamlToken); cdecl; external;
+procedure _yaml_token_delete(token: PYamlToken); cdecl; external;
 
 (** @} *)
 

@@ -58,7 +58,7 @@ type
    *)
 
   (** The character type (UTF-8 octet). *)
-  UString = WideString; // change to UnicodeString on XE2
+  YamlString = WideString; // change to UnicodeString on XE2
 
   (** The version directive data. *)
   IYamlVersionDirective = interface
@@ -70,18 +70,26 @@ type
     (** The minor version number. *)
     property Minor: Integer read GetMinor;
   end;
-  TIYamlTagDirectiveDynArray = array of IYamlVersionDirective;
+  YamlVersionDirective = class
+  public
+    class function Create(Major, Minor: Integer): IYamlVersionDirective;
+  end;
 
   (** The tag directive data. *)
   IYamlTagDirective = interface
   ['{C97DAEAC-9F62-4001-A23F-EF27ED5BF48D}']
-    function GetHandle: UString;
-    function GetPrefix: UString;
+    function GetHandle: YamlString;
+    function GetPrefix: YamlString;
     (** The tag handle. *)
-    property Handle: UString read GetHandle;
+    property Handle: YamlString read GetHandle;
     (** The tag prefix. *)
-    property Prefix: UString read GetPrefix;
+    property Prefix: YamlString read GetPrefix;
   end;
+  YamlTagDirective = class
+  public
+    class function Create(const Handle, Prefix: YamlString): IYamlTagDirective;
+  end;
+  TIYamlTagDirectiveDynArray = array of IYamlTagDirective;
 
   (** The stream encoding. *)
   TYamlEncoding = YamlThin.TYamlEncoding;
@@ -91,12 +99,12 @@ type
   TYamlBreak = YamlThin.TYamlBreak;
 
   (** Many bad things could happen with the parser and emitter. *)
-  EYamlError = class(Exception);
+  EYamlError = class(EAbort);
   (** No error is produced. *)
   // no error, no exception
 
   (** Cannot allocate or reallocate a block of memory. *)
-  EYamlMemoryError = class(EYamlError);
+  EYamlMemoryError = class(EOutOfMemory);
 
   (** Cannot read or decode the input stream. *)
   EYamlReaderError = class(EYamlError);
@@ -159,11 +167,11 @@ type
   ['{AB5E049D-123D-45EB-BFB3-D7B5424AECB4}']
     function GetType_: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
-    function GetAliasValue: UString;
-    function GetAnchorValue: UString;
-    function GetTagHandle: UString;
-    function GetTagSuffix: UString;
-    function GetScalarValue: UString;
+    function GetAliasValue: YamlString;
+    function GetAnchorValue: YamlString;
+    function GetTagHandle: YamlString;
+    function GetTagSuffix: YamlString;
+    function GetScalarValue: YamlString;
     function GetScalarStyle: TYamlScalarStyle;
     function GetVersionDirective: IYamlVersionDirective;
     function GetTagDirective: IYamlTagDirective;
@@ -181,21 +189,21 @@ type
 
       (** The alias (for @c YAML_ALIAS_TOKEN). *)
         (** The alias value. *)
-        property AliasValue: UString read GetAliasValue;
+        property AliasValue: YamlString read GetAliasValue;
 
       (** The anchor (for @c YAML_ANCHOR_TOKEN). *)
         (** The anchor value. *)
-        property AnchorValue: UString read GetAnchorValue;
+        property AnchorValue: YamlString read GetAnchorValue;
 
       (** The tag (for @c YAML_TAG_TOKEN). *)
         (** The tag handle. *)
-        property TagHandle: UString read GetTagHandle;
+        property TagHandle: YamlString read GetTagHandle;
         (** The tag suffix. *)
-        property TagSuffix: UString read GetTagSuffix;
+        property TagSuffix: YamlString read GetTagSuffix;
 
       (** The scalar value (for @c YAML_SCALAR_TOKEN). *)
         (** The scalar value. *)
-        property ScalarValue: UString read GetScalarValue;
+        property ScalarValue: YamlString read GetScalarValue;
         (** The length of the scalar value. *)
         // ScalarLength
         (** The scalar style. *)
@@ -238,22 +246,22 @@ type
     function GetType_: TYamlEventType;
     function GetStreamStartEncoding: TYamlEncoding;
     function GetDocumentStartVersionDirective: IYamlVersionDirective;
-    function GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray
+    function GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray;
     function GetDocumentStartImplicit: Boolean;
     function GetDocumentEndImplicit: Boolean;
-    function GetAliasAnchor: UString;
-    function GetScalarAnchor: UString;
-    function GetScalarTag: UString;
-    function GetScalarValue: UString;
+    function GetAliasAnchor: YamlString;
+    function GetScalarAnchor: YamlString;
+    function GetScalarTag: YamlString;
+    function GetScalarValue: YamlString;
     function GetScalarPlainImplicit: Boolean;
     function GetScalarQuotedImplicit: Boolean;
     function GetScalarStyle: TYamlScalarStyle;
-    function GetSequenceStartAnchor: UString;
-    function GetSequenceStartTag: UString;
+    function GetSequenceStartAnchor: YamlString;
+    function GetSequenceStartTag: YamlString;
     function GetSequenceStartImplicit: Boolean;
     function GetSequenceStartStyle: TYamlSequenceStyle;
-    function GetMappingStartAnchor: UString;
-    function GetMappingStartTag: UString;
+    function GetMappingStartAnchor: YamlString;
+    function GetMappingStartTag: YamlString;
     function GetMappingStartImplicit: Boolean;
     function GetMappingStartStyle: TYamlMappingStyle;
     function GetStartMark: IYamlMark;
@@ -284,15 +292,15 @@ type
 
       (** The alias parameters (for @c YAML_ALIAS_EVENT). *)
         (** The anchor. *)
-        property AliasAnchor: UString read GetAliasAnchor;
+        property AliasAnchor: YamlString read GetAliasAnchor;
 
       (** The scalar parameters (for @c YAML_SCALAR_EVENT). *)
         (** The anchor. *)
-        property ScalarAnchor: UString read GetScalarAnchor;
+        property ScalarAnchor: YamlString read GetScalarAnchor;
         (** The tag. *)
-        property ScalarTag: UString read GetScalarTag;
+        property ScalarTag: YamlString read GetScalarTag;
         (** The scalar value. *)
-        property ScalarValue: UString read GetScalarValue;
+        property ScalarValue: YamlString read GetScalarValue;
         (** The length of the scalar value. *)
         // ScalarLength
         (** Is the tag optional for the plain style? *)
@@ -304,9 +312,9 @@ type
 
       (** The sequence parameters (for @c YAML_SEQUENCE_START_EVENT). *)
         (** The anchor. *)
-        property SequenceStartAnchor: UString read GetSequenceStartAnchor;
+        property SequenceStartAnchor: YamlString read GetSequenceStartAnchor;
         (** The tag. *)
-        property SequenceStartTag: UString read GetSequenceStartTag;
+        property SequenceStartTag: YamlString read GetSequenceStartTag;
         (** Is the tag optional? *)
         property SequenceStartImplicit: Boolean read GetSequenceStartImplicit;
         (** The sequence style. *)
@@ -314,13 +322,13 @@ type
 
       (** The mapping parameters (for @c YAML_MAPPING_START_EVENT). *)
         (** The anchor. *)
-        property MappingStartAnchor: UString;
+        property MappingStartAnchor: YamlString read GetMappingStartAnchor;
         (** The tag. *)
-        property MappingStartTag: UString;
+        property MappingStartTag: YamlString read GetMappingStartTag;
         (** Is the tag optional? *)
-        property MappingStartImplicit: Boolean;
+        property MappingStartImplicit: Boolean read GetMappingStartImplicit;
         (** The mapping style. *)
-        property MappingStartStyle: TYamlMappingStyle;
+        property MappingStartStyle: TYamlMappingStyle read GetMappingStartStyle;
 
     (** The beginning of the event. *)
     property StartMark: IYamlMark read GetStartMark;
@@ -338,7 +346,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlStreamStartEvent = class
+  YamlEventStreamStart = class
   public
     class function Create(Encoding: TYamlEncoding): IYamlEvent;
   end;
@@ -351,7 +359,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlStreamEndEvent = class
+  YamlEventStreamEnd = class
   public
     class function Create: IYamlEvent;
   end;
@@ -375,10 +383,10 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlDocumentStartEvent = class
+  YamlEventDocumentStart = class
   public
-    class function Create(VersionDirective: IYamlVersionDirective;
-      TagDirectives: array of IYamlTagDirective;
+    class function Create(const VersionDirective: IYamlVersionDirective;
+      const TagDirectives: array of IYamlTagDirective;
       Implicit: Boolean): IYamlEvent;
   end;
 
@@ -394,7 +402,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlDocumentEndEvent = class
+  YamlEventDocumentEnd = class
   public
     class function Create(Implicit: Boolean): IYamlEvent;
   end;
@@ -408,9 +416,9 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlAliasEvent = class
+  YamlEventAlias = class
   public
-    class function Create(Anchor: UString): IYamlEvent;
+    class function Create(const Anchor: YamlString): IYamlEvent;
   end;
 
   (**
@@ -435,9 +443,9 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlScalarEvent = class
+  YamlEventScalar = class
   public
-    class function Create(Anchor, Tag, Value: UString;
+    class function Create(const Anchor, Tag, Value: YamlString;
       PlainImplicit, QuotedImplicit: Boolean;
       Style: TYamlScalarStyle): IYamlEvent;
   end;
@@ -458,9 +466,9 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlSequenceStartEvent = class
+  YamlEventSequenceStart = class
   public
-    class function Create(Anchor, Tag: UString; Implicit: Boolean;
+    class function Create(const Anchor, Tag: YamlString; Implicit: Boolean;
       Style: TYamlSequenceStyle): IYamlEvent;
   end;
 
@@ -472,7 +480,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlSequenceEndEvent = class
+  YamlEventSequenceEnd = class
   public
     class function Create: IYamlEvent;
   end;
@@ -493,10 +501,10 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlMappingStartEvent = class
+  YamlEventMappingStart = class
   public
-    class function Create(Anchor, Tag: UString; Implicit: Boolean;
-    Style: TYamlMappingStyle): IYamlEvent;
+    class function Create(const Anchor, Tag: YamlString; Implicit: Boolean;
+      Style: TYamlMappingStyle): IYamlEvent;
   end;
 
   (**
@@ -507,7 +515,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  YamlMappingEndEvent = class
+  YamlEventMappingEnd = class
   public
     class function Create: IYamlEvent;
   end;
@@ -578,8 +586,8 @@ type
     function GetDocument: IYamlDocument;
     function GetId: Integer;
     function GetType_: TYamlNodeType;
-    function GetTag: UString;
-    function GetScalarValue: UString;
+    function GetTag: YamlString;
+    function GetScalarValue: YamlString;
     function GetScalarStyle: TYamlScalarStyle;
     function GetSequenceItems: TIYamlNodeDynArray;
     procedure AppendSequenceItem(Item: IYamlNode);
@@ -596,12 +604,12 @@ type
     property Type_: TYamlNodeType read GetType_;
 
     (** The node tag. *)
-    property Tag: UString read GetTag;
+    property Tag: YamlString read GetTag;
 
     (** The node data. *)
       (** The scalar parameters (for @c YAML_SCALAR_NODE). *)
         (** The scalar value. *)
-        property ScalarValue: UString read GetScalarValue;
+        property ScalarValue: YamlString read GetScalarValue;
         (** The scalar style. *)
         property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
 
@@ -636,9 +644,9 @@ type
     function GetStartMark: IYamlMark;
     function GetEndMark: IYamlMark;
 
-    function CreateScalar(Tag, Value: UString; Style: TYamlScalarStyle): IYamlNode;
-    function CreateSequence(Tag: UString; Style: TYamlScalarStyle): IYamlNode;
-    function CreateMapping(Tag: UString; Style: TYamlMappingStyle): IYamlNode;
+    function CreateScalar(const Tag, Value: YamlString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateSequence(const Tag: YamlString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateMapping(const Tag: YamlString; Style: TYamlMappingStyle): IYamlNode;
 
     (** The document nodes. *)
     property Nodes: TIYamlNodeDynArray read GetNodes;
@@ -656,9 +664,9 @@ type
     property EndImplicit: Boolean read GetEndImplicit;
 
     (** The beginning of the document. *)
-    property StartMark: IYamlMark;
+    property StartMark: IYamlMark read GetStartMark;
     (** The end of the document. *)
-    property EndMark: IYamlMark;
+    property EndMark: IYamlMark read GetEndMark;
 
   end;
 
@@ -682,8 +690,8 @@ type
 
   YamlDocument = class
   public
-    class function Create(VersionDirective: IYamlVersionDirective;
-      TagDirectives: array of IYamlTagDirective;
+    class function Create(const VersionDirective: IYamlVersionDirective;
+      const TagDirectives: array of IYamlTagDirective;
       StartImplicit, EndImplicit: Boolean): IYamlDocument;
   end;
 
@@ -1069,6 +1077,584 @@ begin
   _yaml_get_version(Major, Minor, Result);
 end;
 
+// TODO: internal API to get PYamlVersionDirective
+type
+  TYamlVersionDirectiveImpl = class(TInterfacedObject, IYamlVersionDirective)
+  private
+    FVersionDirective: TYamlVersionDirective;
+  public
+    constructor Create(Major, Minor: Integer); overload;
+    constructor Create(VersionDirective: PYamlVersionDirective); overload;
+    constructor Create(const VersionDirective: IYamlVersionDirective); overload;
+    function GetMajor: Integer;
+    function GetMinor: Integer;
+    property Major: Integer read GetMajor;
+    property Minor: Integer read GetMinor;
+  end;
 
+constructor TYamlVersionDirectiveImpl.Create(Major, Minor: Integer);
+begin
+  inherited Create;
+  FVersionDirective.major := Major;
+  FVersionDirective.minor := Minor;
+end;
+
+constructor TYamlVersionDirectiveImpl.Create(VersionDirective: PYamlVersionDirective);
+begin
+  if not Assigned(VersionDirective) then
+    raise ERangeError.Create('TYamlVersionDirectiveImpl.Create(PYamlVersionDirective): VersionDirective = nil');
+  Create(VersionDirective.major,VersionDirective.minor);
+end;
+
+constructor TYamlVersionDirectiveImpl.Create(const VersionDirective: IYamlVersionDirective);
+begin
+  if not Assigned(VersionDirective) then
+    raise ERangeError.Create('TYamlVersionDirectiveImpl.Create(IYamlVersionDirective): VersionDirective = nil');
+  Create(VersionDirective.Major,VersionDirective.Minor);
+end;
+
+class function YamlVersionDirective.Create(Major, Minor: Integer): IYamlVersionDirective;
+begin
+  Result := TYamlVersionDirectiveImpl.Create(Major, Minor);
+end;
+
+function TYamlVersionDirectiveImpl.GetMajor: Integer;
+begin
+  Result := FVersionDirective.major;
+end;
+
+function TYamlVersionDirectiveImpl.GetMinor: Integer;
+begin
+  Result := FVersionDirective.minor;
+end;
+
+type
+  TYamlTagDirectiveImpl = class(TInterfacedObject, IYamlTagDirective)
+  private
+    FHandle, FPrefix: UTF8String; // holds references
+    FTagDirective: TYamlTagDirective;
+  public
+    constructor Create(const Handle, Prefix: YamlString); overload;
+    constructor Create(TagDirective: PYamlTagDirective); overload;
+    constructor Create(const TagDirective: IYamlTagDirective); overload;
+    function GetHandle: YamlString;
+    function GetPrefix: YamlString;
+    property Handle: YamlString read GetHandle;
+    property Prefix: YamlString read GetPrefix;
+  end;
+
+constructor TYamlTagDirectiveImpl.Create(const Handle, Prefix: YamlString);
+begin
+  inherited Create;
+  FHandle := UTF8Encode(Handle);
+  FPrefix := UTF8Decode(Prefix);
+  FTagDirective.handle := PYamlChar(FHandle);
+  FTagDirective.prefix := PYamlChar(FPrefix);
+end;
+
+constructor TYamlTagDirectiveImpl.Create(TagDirective: PYamlTagDirective);
+begin
+  if not Assigned(TagDirective) then
+    raise ERangeError.Create('TYamlTagDirectiveImpl.Create(PYamlTagDirective): TagDirective = nil');
+  inherited Create;
+  FHandle := UTF8String(TagDirective.handle);
+  FPrefix := UTF8String(TagDirective.prefix);
+  FTagDirective.handle := PYamlChar(FHandle);
+  FTagDirective.prefix := PYamlChar(FPrefix);
+end;
+
+constructor TYamlTagDirectiveImpl.Create(const TagDirective: IYamlTagDirective);
+begin
+  if not Assigned(TagDirective) then
+    raise ERangeError.Create('TYamlTagDirectiveImpl.Create(IYamlTagDirective): TagDirective = nil');
+  Create(TagDirective.Handle, TagDirective.Prefix);
+end;
+
+class function YamlTagDirective.Create(const Handle, Prefix: YamlString): IYamlTagDirective;
+begin
+  Result := TYamlTagDirectiveImpl.Create(Handle, Prefix);
+end;
+
+function TYamlTagDirectiveImpl.GetHandle: YamlString;
+begin
+  Result := UTF8Decode(FHandle);
+end;
+
+function TYamlTagDirectiveImpl.GetPrefix: YamlString;
+begin
+  Result := UTF8Decode(FPrefix);
+end;
+
+type
+  TYamlMarkImpl = class(TInterfacedObject, IYamlMark)
+  private
+    FMark: TYamlMark;
+  public
+    constructor Create(Index, Line, Column: Integer); overload;
+    constructor Create(Mark: PYamlMark); overload;
+    constructor Create(const Mark: IYamlMark); overload;
+    function GetIndex: Integer;
+    function GetLine: Integer;
+    function GetColumn: Integer;
+    property Index: Integer read GetIndex;
+    property Line: Integer read GetLine;
+    property Column: Integer read GetColumn;
+  end;
+
+constructor TYamlMarkImpl.Create(Index, Line, Column: Integer);
+begin
+  inherited Create;
+  FMark.index := Index;
+  FMark.line := Line;
+  FMark.column := Column;
+end;
+
+constructor TYamlMarkImpl.Create(Mark: PYamlMark);
+begin
+  if not Assigned(Mark) then
+    raise ERangeError.Create('TYamlMarkImpl.Create(PYamlMark): Mark = nil');
+  Create(Mark.index, Mark.line, Mark.column);
+end;
+
+constructor TYamlMarkImpl.Create(const Mark: IYamlMark);
+begin
+  if not Assigned(Mark) then
+    raise ERangeError.Create('TYamlMarkImpl.Create(IYamlMark): Mark = nil');
+  Create(Mark.Index, Mark.Line, Mark.Column);
+end;
+
+function TYamlMarkImpl.GetIndex: Integer;
+begin
+  Result := FMark.index;
+end;
+
+function TYamlMarkImpl.GetLine: Integer;
+begin
+  Result := FMark.line;
+end;
+
+function TYamlMarkImpl.GetColumn: Integer;
+begin
+  Result := FMark.column;
+end;
+
+type
+  TYamlTokenImpl = class(TInterfacedObject, IYamlToken)
+  private
+    FToken: PYamlToken;
+  public
+    constructor Create(Token: PYamlToken); // acquires Token!
+    destructor Destroy; override;
+    function GetType_: TYamlTokenType;
+    function GetStreamStartEncoding: TYamlEncoding;
+    function GetAliasValue: YamlString;
+    function GetAnchorValue: YamlString;
+    function GetTagHandle: YamlString;
+    function GetTagSuffix: YamlString;
+    function GetScalarValue: YamlString;
+    function GetScalarStyle: TYamlScalarStyle;
+    function GetVersionDirective: IYamlVersionDirective;
+    function GetTagDirective: IYamlTagDirective;
+    function GetStartMark: IYamlMark;
+    function GetEndMark: IYamlMark;
+
+    property Type_: TYamlTokenType read GetType_;
+    property StreamStartEncoding: TYamlEncoding read GetStreamStartEncoding;
+    property AliasValue: YamlString read GetAliasValue;
+    property AnchorValue: YamlString read GetAnchorValue;
+    property TagHandle: YamlString read GetTagHandle;
+    property TagSuffix: YamlString read GetTagSuffix;
+    property ScalarValue: YamlString read GetScalarValue;
+    property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
+    property VersionDirective: IYamlVersionDirective read GetVersionDirective;
+    property TagDirective: IYamlTagDirective read GetTagDirective;
+    property StartMark: IYamlMark read GetStartMark;
+    property EndMark: IYamlMark read GetEndMark;
+  end;
+
+constructor TYamlTokenImpl.Create(Token: PYamlToken); // acquires Token!
+begin
+  if not Assigned(Token) then
+    raise ERangeError.Create('TYamlTokenImpl.Create: Token = nil');
+  inherited Create;
+  FToken := Token;
+end;
+
+destructor TYamlTokenImpl.Destroy;
+begin
+  _yaml_token_delete(FToken);
+  inherited Destroy;
+end;
+
+function TYamlTokenImpl.GetType_: TYamlTokenType;
+begin
+  Result := FToken.data.type_;
+end;
+
+function TYamlTokenImpl.GetStreamStartEncoding: TYamlEncoding;
+begin
+  if FToken.data.type_ <> yamlStreamStartToken then
+    raise ERangeError.Create('YamlToken.StreamStartEncoding: Type_ <> yamlStreamStartToken');
+  Result := FToken.data.stream_start_encoding;
+end;
+
+function TYamlTokenImpl.GetAliasValue: YamlString;
+begin
+  if FToken.data.type_ <> yamlAliasToken then
+    raise ERangeError.Create('YamlToken.AliasValue: Type_ <> yamlAliasToken');
+  Result := UTF8Decode(FToken.data.alias_value);
+end;
+
+function TYamlTokenImpl.GetAnchorValue: YamlString;
+begin
+  if FToken.data.type_ <> yamlAnchorToken then
+    raise ERangeError.Create('YamlToken.AnchorValue: Type_ <> yamlAnchorToken');
+  Result := UTF8Decode(FToken.data.anchor_value);
+end;
+
+function TYamlTokenImpl.GetTagHandle: YamlString;
+begin
+  if FToken.data.type_ <> yamlTagToken then
+    raise ERangeError.Create('YamlToken.TagHandle: Type_ <> yamlTagToken');
+  Result := UTF8Decode(FToken.data.tag_handle);
+end;
+
+function TYamlTokenImpl.GetTagSuffix: YamlString;
+begin
+  if FToken.data.type_ <> yamlTagToken then
+    raise ERangeError.Create('YamlToken.TagSuffix: Type_ <> yamlTagToken');
+  Result := UTF8Decode(FToken.data.tag_suffix);
+end;
+
+function TYamlTokenImpl.GetScalarValue: YamlString;
+var
+  Temp: UTF8String;
+begin
+  if FToken.data.type_ <> yamlScalarToken then
+    raise ERangeError.Create('YamlToken.ScalarValue: Type_ <> yamlScalarToken');
+  if Assigned(FToken.data.scalar_value) then
+    SetString(Temp, FToken.data.scalar_value, FToken.data.scalar_length);
+  Result := UTF8Decode(Temp);
+end;
+
+function TYamlTokenImpl.GetScalarStyle: TYamlScalarStyle;
+begin
+  if FToken.data.type_ <> yamlScalarToken then
+    raise ERangeError.Create('YamlToken.ScalarStyle: Type_ <> yamlScalarToken');
+  Result := FToken.data.scalar_style;
+end;
+
+function TYamlTokenImpl.GetVersionDirective: IYamlVersionDirective;
+begin
+  if FToken.data.type_ <> yamlVersionDirectiveToken then
+    raise ERangeError.Create('YamlToken.VersionDirective: Type_ <> yamlVersionDirectiveToken');
+  Result := YamlVersionDirective.Create(FToken.data.version_directive_major, FToken.data.version_directive_minor);
+end;
+
+function TYamlTokenImpl.GetTagDirective: IYamlTagDirective;
+var
+  Temp: TYamlTagDirective;
+begin
+  if FToken.data.type_ <> yamlTagDirectiveToken then
+    raise ERangeError.Create('YamlToken.TagDirective: Type_ <> yamlTagDirectiveToken');
+  Temp.handle := FToken.data.tag_directive_handle;
+  Temp.prefix := FToken.data.tag_directive_prefix;
+  Result := TYamlTagDirectiveImpl.Create(@Temp);
+end;
+
+function TYamlTokenImpl.GetStartMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FToken.start_mark));
+end;
+
+function TYamlTokenImpl.GetEndMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FToken.end_mark));
+end;
+
+type
+  TYamlEventImpl = class(TInterfacedObject, IYamlEvent)
+  private
+    FEvent: TYamlEvent;
+  public
+    constructor Create(out Event: PYamlEvent);
+    destructor Destroy; override;
+    function GetType_: TYamlEventType;
+    function GetStreamStartEncoding: TYamlEncoding;
+    function GetDocumentStartVersionDirective: IYamlVersionDirective;
+    function GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray;
+    function GetDocumentStartImplicit: Boolean;
+    function GetDocumentEndImplicit: Boolean;
+    function GetAliasAnchor: YamlString;
+    function GetScalarAnchor: YamlString;
+    function GetScalarTag: YamlString;
+    function GetScalarValue: YamlString;
+    function GetScalarPlainImplicit: Boolean;
+    function GetScalarQuotedImplicit: Boolean;
+    function GetScalarStyle: TYamlScalarStyle;
+    function GetSequenceStartAnchor: YamlString;
+    function GetSequenceStartTag: YamlString;
+    function GetSequenceStartImplicit: Boolean;
+    function GetSequenceStartStyle: TYamlSequenceStyle;
+    function GetMappingStartAnchor: YamlString;
+    function GetMappingStartTag: YamlString;
+    function GetMappingStartImplicit: Boolean;
+    function GetMappingStartStyle: TYamlMappingStyle;
+    function GetStartMark: IYamlMark;
+    function GetEndMark: IYamlMark;
+
+    property Type_: TYamlEventType read GetType_;
+    property StreamStartEncoding: TYamlEncoding read GetStreamStartEncoding;
+    property DocumentStartVersionDirective: IYamlVersionDirective read GetDocumentStartVersionDirective;
+    property DocumentStartTagDirectives: TIYamlTagDirectiveDynArray read GetDocumentStartTagDirectives;
+    property DocumentStartImplicit: Boolean read GetDocumentStartImplicit;
+    property DocumentEndImplicit: Boolean read GetDocumentEndImplicit;
+    property AliasAnchor: YamlString read GetAliasAnchor;
+    property ScalarAnchor: YamlString read GetScalarAnchor;
+    property ScalarTag: YamlString read GetScalarTag;
+    property ScalarValue: YamlString read GetScalarValue;
+    property ScalarPlainImplicit: Boolean read GetScalarPlainImplicit;
+    property ScalarQuotedImplicit: Boolean read GetScalarQuotedImplicit;
+    property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
+    property SequenceStartAnchor: YamlString read GetSequenceStartAnchor;
+    property SequenceStartTag: YamlString read GetSequenceStartTag;
+    property SequenceStartImplicit: Boolean read GetSequenceStartImplicit;
+    property SequenceStartStyle: TYamlSequenceStyle read GetSequenceStartStyle;
+    property MappingStartAnchor: YamlString read GetMappingStartAnchor;
+    property MappingStartTag: YamlString read GetMappingStartTag;
+    property MappingStartImplicit: Boolean read GetMappingStartImplicit;
+    property MappingStartStyle: TYamlMappingStyle read GetMappingStartStyle;
+    property StartMark: IYamlMark read GetStartMark;
+    property EndMark: IYamlMark read GetEndMark;
+  end;
+
+constructor TYamlEventImpl.Create(var Event: PYamlEvent);
+begin
+  inherited Create;
+  Event := @FEvent;
+end;
+
+destructor TYamlEventImpl.Destroy;
+begin
+  _yaml_event_delete(FEvent);
+  inherited Destroy;
+end;
+
+function TYamlEventImpl.GetType_: TYamlEventType;
+begin
+  Result := FEvent.data.type_;
+end;
+
+function TYamlEventImpl.GetStreamStartEncoding: TYamlEncoding;
+begin
+  if FEvent.data.type_ <> yamlStreamStartEvent then
+    raise ERangeError.Create('YamlEvent.StreamStartEncoding: Type_ <> yamlStreamStartToken');
+  Result := FEvent.data.stream_start_encoding;
+end;
+
+function TYamlEventImpl.GetDocumentStartVersionDirective: IYamlVersionDirective;
+begin
+  if FEvent.data.type_ <> yamlDocumentStartEvent then
+    raise ERangeError.Create('YamlEvent.DocumentStartVersionDirective: Type_ <> yamlDocumentStartEvent');
+  Result := TYamlVersionDirectiveImpl.Create(FEvent.data.document_start_version_directive);
+end;
+
+function TYamlEventImpl.GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray;
+var
+  Start, Finish: PAnsiChar;
+  i, L: Integer;
+begin
+  if FEvent.data.type_ <> yamlDocumentStartEvent then
+    raise ERangeError.Create('YamlEvent.DocumentStartTagDirectives: Type_ <> yamlDocumentStartEvent');
+  Start := PAnsiChar(Pointer(FEvent.data.document_start_tag_directives_start));
+  Finish := PAnsiChar(Pointer(FEvent.data.document_start_tag_directives_start));
+  L := (Finish - Start) div SizeOf(TYamlTagDirective);
+  for i := 0 to L - 1 do
+  begin
+    Result[i] := TYamlTagDirectiveImpl.Create(PYamlTagDirective(Pointer(Start + i * SizeOf(TYamlTagDirective))));
+  end;
+end;
+
+function TYamlEventImpl.GetDocumentStartImplicit: Boolean;
+begin
+  if FEvent.data.type_ <> yamlDocumentStartEvent then
+    raise ERangeError.Create('YamlEvent.DocumentStartImplicit: Type_ <> yamlDocumentStartEvent');
+  Result := FEvent.data.document_start_implicit <> 0;
+end;
+
+function TYamlEventImpl.GetDocumentEndImplicit: Boolean;
+begin
+  if FEvent.data.type_ <> yamlDocumentEndEvent then
+    raise ERangeError.Create('YamlEvent.DocumentEndImplicit: Type_ <> yamlDocumentEndEvent');
+  Result := FEvent.data.document_end_implicit <> 0;
+end;
+
+function TYamlEventImpl.GetAliasAnchor: YamlString;
+begin
+  if FEvent.data.type_ <> yamlAliasEvent then
+    raise ERangeError.Create('YamlEvent.AliasAnchor: Type_ <> yamlAliasEvent');
+  Result := UTF8Decode(FEvent.data.alias_anchor);
+end;
+
+function TYamlEventImpl.GetScalarAnchor: YamlString;
+begin
+  if FEvent.data.type_ <> yamlScalarEvent then
+    raise ERangeError.Create('YamlEvent.ScalarAnchor: Type_ <> yamlScalarEvent');
+  Result := UTF8Decode(FEvent.data.scalar_anchor);
+end;
+
+function TYamlEventImpl.GetScalarTag: YamlString;
+begin
+  if FEvent.data.type_ <> yamlScalarEvent then
+    raise ERangeError.Create('YamlEvent.ScalarTag: Type_ <> yamlScalarEvent');
+  Result := UTF8Decode(FEvent.data.scalar_tag);
+end;
+
+function TYamlEventImpl.GetScalarValue: YamlString;
+var
+  Temp: UTF8String;
+begin
+  if FEvent.data.type_ <> yamlScalarEvent then
+    raise ERangeError.Create('YamlEvent.ScalarTag: Type_ <> yamlScalarEvent');
+  if Assigned(FEvent.data.scalar_value) then
+    SetString(Temp, FEvent.data.scalar_value, FEvent.data.scalar_length);
+  Result := UTF8Decode(Temp);
+end;
+
+function TYamlEventImpl.GetScalarPlainImplicit: Boolean;
+begin
+  if FEvent.data.type_ <> yamlScalarEvent then
+    raise ERangeError.Create('YamlEvent.ScalarPlainImplicit: Type_ <> yamlScalarEvent');
+  Result := FEvent.data.scalar_plain_implicit <> 0;
+end;
+
+function TYamlEventImpl.GetScalarQuotedImplicit: Boolean;
+begin
+  if FEvent.data.type_ <> yamlScalarEvent then
+    raise ERangeError.Create('YamlEvent.ScalarQuotedImplicit: Type_ <> yamlScalarEvent');
+  Result := FEvent.data.scalar_quoted_implicit <> 0;
+end;
+
+function TYamlEventImpl.GetScalarStyle: TYamlScalarStyle;
+begin
+  if FEvent.data.type_ <> yamlScalarEvent then
+    raise ERangeError.Create('YamlEvent.ScalarStyle: Type_ <> yamlScalarEvent');
+  Result := FEvent.data.scalar_style;
+end;
+
+function TYamlEventImpl.GetSequenceStartAnchor: YamlString;
+begin
+  if FEvent.data.type_ <> yamlSequenceStartEvent then
+    raise ERangeError.Create('YamlEvent.SequenceStartAnchor: Type_ <> yamlSequenceStartEvent');
+  Result := UTF8Decode(FEvent.data.sequence_start_anchor);
+end;
+
+function TYamlEventImpl.GetSequenceStartTag: YamlString;
+begin
+  if FEvent.data.type_ <> yamlSequenceStartEvent then
+    raise ERangeError.Create('YamlEvent.SequenceStartTag: Type_ <> yamlSequenceStartEvent');
+  Result := UTF8Decode(FEvent.data.sequence_start_tag);
+end;
+
+function TYamlEventImpl.GetSequenceStartImplicit: Boolean;
+begin
+  if FEvent.data.type_ <> yamlSequenceStartEvent then
+    raise ERangeError.Create('YamlEvent.SequenceStartImplicit: Type_ <> yamlSequenceStartEvent');
+  Result := FEvent.data.sequence_start_implicit <> 0;
+end;
+
+function TYamlEventImpl.GetSequenceStartStyle: TYamlSequenceStyle;
+begin
+  if FEvent.data.type_ <> yamlSequenceStartEvent then
+    raise ERangeError.Create('YamlEvent.SequenceStartStyle: Type_ <> yamlSequenceStartEvent');
+  Result := FEvent.data.sequence_start_style;
+end;
+
+function TYamlEventImpl.GetMappingStartAnchor: YamlString;
+begin
+  if FEvent.data.type_ <> yamlMappingStartEvent then
+    raise ERangeError.Create('YamlEvent.MappingStartAnchor: Type_ <> yamlMappingStartEvent');
+  Result := UTF8Decode(FEvent.data.mapping_start_anchor);
+end;
+
+function TYamlEventImpl.GetMappingStartTag: YamlString;
+begin
+  if FEvent.data.type_ <> yamlMappingStartEvent then
+    raise ERangeError.Create('YamlEvent.MappingStartTag: Type_ <> yamlMappingStartEvent');
+  Result := UTF8Decode(FEvent.data.mapping_start_tag);
+end;
+
+function TYamlEventImpl.GetMappingStartImplicit: Boolean;
+begin
+  if FEvent.data.type_ <> yamlMappingStartEvent then
+    raise ERangeError.Create('YamlEvent.MappingStartImplicit: Type_ <> yamlMappingStartEvent');
+  Result := FEvent.data.mapping_start_implicit <> 0;
+end;
+
+function TYamlEventImpl.GetMappingStartStyle: TYamlMappingStyle;
+begin
+  if FEvent.data.type_ <> yamlMappingStartEvent then
+    raise ERangeError.Create('YamlEvent.MappingStartStyle: Type_ <> yamlMappingStartEvent');
+  Result := FEvent.data.mapping_start_style;
+end;
+
+function TYamlEventImpl.GetStartMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FEvent.start_mark));
+end;
+
+function TYamlEventImpl.GetEndMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FEvent.end_mark));
+end;
+
+class function YamlEventStreamStart.Create(Encoding: TYamlEncoding): IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  if _yaml_stream_start_event_initialize(NewEvent^, Encoding) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventStreamStart.Create: out of memory');
+end;
+
+class function YamlEventStreamEnd.Create: IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+begin
+  Result := TYamlEventImpl.Create(NewEvent);
+  if _yaml_stream_end_event_initialize(NewEvent^) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventStreamEnd.Create: out of memory');
+end;
+
+class function YamlEventDocumentStart.Create(const VersionDirective: IYamlVersionDirective;
+  const TagDirectives: array of IYamlTagDirective; Implicit: Boolean): IYamlEvent;
+var
+  NewEvent: PYamlEvent;
+  InternalVersionDirective: TYamlVersionDirective;
+  InternalVersionDirectivePtr: PYamlVersionDirective;
+  InternalTagDirectives: array of TYamlTagDirective;
+  InternalTagDirectiveStart, InternalTagDirectiveEnd: PYamlTagDirective;
+  i, L: Integer;
+begin
+  InternalVersionDirectivePtr := nil;
+  if Assigned(VersionDirective) then
+  begin
+    InternalVersionDirective.major := VersionDirective.Major;
+    InternalVersionDirective.minor := VersionDirective.Minor;
+    InternalVersionDirectivePtr := @InternalVersionDirective;
+  end;
+
+  InternalTagDirectiveStart := nil;
+  InternalTagDirectiveEnd := nil;
+  L := Length(TagDirectives);
+  if L <> 0 then
+  begin
+    // I'm here
+  end;
+
+  Result := TYamlEventImpl.Create(NewEvent);
+  if _yaml_document_start_event_initialize(NewEvent^) <> 0 then
+    raise EYamlMemoryError.Create('YamlEventDocumentStart.Create: out of memory');
+end;
 
 end.
