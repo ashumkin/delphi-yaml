@@ -584,7 +584,7 @@ type
   IYamlNode = interface
   ['{4A158305-AC46-41AA-86E5-10AC082C14D9}']
     function GetDocument: IYamlDocument;
-    function GetId: Integer;
+    function GetId: Integer; // ids start from 0 while in thin libyaml they start from 1
     function GetType_: TYamlNodeType;
     function GetTag: YamlString;
     function GetScalarValue: YamlString;
@@ -636,7 +636,7 @@ type
   IYamlDocument = interface
   ['{276D0A02-F531-4DBC-9459-44D2CF6E7AED}']
     function GetNodes: TIYamlNodeDynArray;
-    function GetRootNode: IYamlNode;
+    function GetRootNode: IYamlNode; // nil when document is empty
     function GetVersionDirective: IYamlVersionDirective;
     function GetTagDirectives: TIYamlTagDirectiveDynArray;
     function GetStartImplicit: Boolean;
@@ -1608,7 +1608,7 @@ var
   NewEvent: PYamlEvent;
 begin
   Result := TYamlEventImpl.Create(NewEvent);
-  if _yaml_stream_start_event_initialize(NewEvent^, Encoding) <> 0 then
+  if _yaml_stream_start_event_initialize(NewEvent^, Encoding) = 0 then
     raise EYamlMemoryError.Create('YamlEventStreamStart.Create: out of memory');
 end;
 
@@ -1617,7 +1617,7 @@ var
   NewEvent: PYamlEvent;
 begin
   Result := TYamlEventImpl.Create(NewEvent);
-  if _yaml_stream_end_event_initialize(NewEvent^) <> 0 then
+  if _yaml_stream_end_event_initialize(NewEvent^) = 0 then
     raise EYamlMemoryError.Create('YamlEventStreamEnd.Create: out of memory');
 end;
 
@@ -1628,7 +1628,7 @@ var
   InternalVersionDirective: TYamlVersionDirective;
   InternalVersionDirectivePtr: PYamlVersionDirective;
   InternalTagDirectives: array of TYamlTagDirective;
-  InternalTagDirectivesStr: array of YamlString;
+  InternalTagDirectivesStr: array of UTF8String;
   InternalTagDirectiveStart, InternalTagDirectiveEnd: PYamlTagDirective;
   i, j, L: Integer;
 begin
@@ -1666,7 +1666,7 @@ begin
     InternalVersionDirectivePtr,
     InternalTagDirectiveStart,
     InternalTagDirectiveEnd,
-    Integer(Implicit)) <> 0 then
+    Integer(Implicit)) = 0 then
     raise EYamlMemoryError.Create('YamlEventDocumentStart.Create: out of memory');
 end;
 
@@ -1675,7 +1675,7 @@ var
   NewEvent: PYamlEvent;
 begin
   Result := TYamlEventImpl.Create(NewEvent);
-  if _yaml_document_end_event_initialize(NewEvent^, Integer(Implicit)) <> 0 then
+  if _yaml_document_end_event_initialize(NewEvent^, Integer(Implicit)) = 0 then
     raise EYamlMemoryError.Create('YamlEventDocumentEnd.Create: out of memory');
 end;
 
@@ -1686,7 +1686,7 @@ var
 begin
   Result := TYamlEventImpl.Create(NewEvent);
   InternalAnchor := UTF8Encode(Anchor);
-  if _yaml_alias_event_initialize(NewEvent^, PYamlChar(InternalAnchor)) <> 0 then
+  if _yaml_alias_event_initialize(NewEvent^, PYamlChar(InternalAnchor)) = 0 then
     raise EYamlMemoryError.Create('YamlEventAlias.Create: out of memory');
 end;
 
@@ -1705,7 +1705,7 @@ begin
     PYamlChar(InternalAnchor), PYamlChar(InternalTag),
     PYamlChar(InternalValue), Length(InternalValue),
     Integer(PlainImplicit), Integer(QuotedImplicit),
-    Style) <> 0 then
+    Style) = 0 then
     raise EYamlMemoryError.Create('YamlEventScalar.Create: out of memory');
 end;
 
@@ -1720,7 +1720,7 @@ begin
   InternalTag := UTF8Encode(Tag);
   if _yaml_sequence_start_event_initialize(NewEvent^,
     PYamlChar(InternalAnchor), PYamlChar(InternalTag),
-    Integer(Implicit), Style) <> 0 then
+    Integer(Implicit), Style) = 0 then
     raise EYamlMemoryError.Create('YamlEventSequenceStart.Create: out of memory');
 end;
 
@@ -1729,7 +1729,7 @@ var
   NewEvent: PYamlEvent;
 begin
   Result := TYamlEventImpl.Create(NewEvent);
-  if _yaml_sequence_end_event_initialize(NewEvent^) <> 0 then
+  if _yaml_sequence_end_event_initialize(NewEvent^) = 0 then
     raise EYamlMemoryError.Create('YamlEventSequenceEnd.Create: out of memory');
 end;
 
@@ -1744,7 +1744,7 @@ begin
   InternalTag := UTF8Encode(Tag);
   if _yaml_mapping_start_event_initialize(NewEvent^,
     PYamlChar(InternalAnchor), PYamlChar(InternalTag),
-    Integer(Implicit), Style) <> 0 then
+    Integer(Implicit), Style) = 0 then
     raise EYamlMemoryError.Create('YamlEventMappingStart.Create: out of memory');
 end;
 
@@ -1753,8 +1753,412 @@ var
   NewEvent: PYamlEvent;
 begin
   Result := TYamlEventImpl.Create(NewEvent);
-  if _yaml_mapping_end_event_initialize(NewEvent^) <> 0 then
+  if _yaml_mapping_end_event_initialize(NewEvent^) = 0 then
     raise EYamlMemoryError.Create('YamlEventMappingEnd.Create: out of memory');
+end;
+
+type
+  TYamlDocumentImpl = class;
+  TYamlNodeImpl = class(TInterfacedObject, IYamlNode)
+  private
+    FDocument: PYamlDocument;
+    FDocumentInterface: IYamlDocument;
+    FId: Integer;
+    function GetNode: PYamlNode;
+  public
+    constructor Create(Document: PYamlDocument;
+      DocumentInterface: IYamlDocument; Index: Integer);
+    function GetDocument: IYamlDocument;
+    function GetId: Integer;
+    function GetType_: TYamlNodeType;
+    function GetTag: YamlString;
+    function GetScalarValue: YamlString;
+    function GetScalarStyle: TYamlScalarStyle;
+    function GetSequenceItems: TIYamlNodeDynArray;
+    procedure AppendSequenceItem(Item: IYamlNode);
+    function GetSequenceStyle: TYamlSequenceStyle;
+    function GetMappingPairs: TYamlNodePairDynArray;
+    procedure AppendMappingPair(Key, Value: IYamlNode);
+    function GetMappingStyle: TYamlMappingStyle;
+    function GetStartMark: IYamlMark;
+    function GetEndMark: IYamlMark;
+
+    property Document: IYamlDocument read GetDocument;
+    property Id: Integer read GetId;
+    property Type_: TYamlNodeType read GetType_;
+    property Tag: YamlString read GetTag;
+    property ScalarValue: YamlString read GetScalarValue;
+    property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
+    property SequenceItems: TIYamlNodeDynArray read GetSequenceItems;
+    property SequenceStyle: TYamlSequenceStyle read GetSequenceStyle;
+    property MappingPairs: TYamlNodePairDynArray read GetMappingPairs;
+    property MappingStyle: TYamlMappingStyle read GetMappingStyle;
+    property StartMark: IYamlMark read GetStartMark;
+    property EndMark: IYamlMark read GetEndMark;
+  end;
+
+  TYamlDocumentImpl = class(TInterfacedObject, IYamlDocument)
+  private
+    FDocument: TYamlDocument;
+  public
+    constructor Create(const VersionDirective: IYamlVersionDirective;
+      const TagDirectives: array of IYamlTagDirective;
+      StartImplicit, EndImplicit: Boolean);
+    destructor Destroy; override;
+    function GetNodes: TIYamlNodeDynArray;
+    function GetRootNode: IYamlNode;
+    function GetVersionDirective: IYamlVersionDirective;
+    function GetTagDirectives: TIYamlTagDirectiveDynArray;
+    function GetStartImplicit: Boolean;
+    function GetEndImplicit: Boolean;
+    function GetStartMark: IYamlMark;
+    function GetEndMark: IYamlMark;
+
+    function CreateScalar(const Tag, Value: YamlString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateSequence(const Tag: YamlString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateMapping(const Tag: YamlString; Style: TYamlMappingStyle): IYamlNode;
+
+    property Nodes: TIYamlNodeDynArray read GetNodes;
+    property RootNode: IYamlNode read GetRootNode;
+    property VersionDirective: IYamlVersionDirective read GetVersionDirective;
+    property TagDirectives: TIYamlTagDirectiveDynArray read GetTagDirectives;
+    property StartImplicit: Boolean read GetStartImplicit;
+    property EndImplicit: Boolean read GetEndImplicit;
+    property StartMark: IYamlMark read GetStartMark;
+    property EndMark: IYamlMark read GetEndMark;
+  end;
+
+constructor TYamlNodeImpl.Create(Document: PYamlDocument;
+  DocumentInterface: IYamlDocument; Index: Integer);
+begin
+  inherited Create;
+  FDocument := Document;
+  if not Assigned(GetNode()) then
+    raise ERangeError.Create('YamlDocument.GetNode: Index out of range');
+  FDocumentInterface := DocumentInterface;
+  FId := Index;
+end;
+
+function TYamlNodeImpl.GetDocument: IYamlDocument;
+begin
+  Result := FDocumentInterface;
+end;
+
+function TYamlNodeImpl.GetId: Integer;
+begin
+  Result := FId;
+end;
+
+function TYamlNodeImpl.GetNode: PYamlNode;
+begin
+  Result := _yaml_document_get_node(FDocument, FId + 1);
+end;
+
+function TYamlNodeImpl.GetType_: TYamlNodeType;
+begin
+  Result := GetNode.type_;
+end;
+
+function TYamlNodeImpl.GetTag: YamlString;
+begin
+  Result := UTF8Decode(GetNode.tag);
+end;
+
+function TYamlNodeImpl.GetScalarValue: YamlString;
+var
+  Node: PYamlNode;
+  Temp: UTF8String;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlScalarNode then
+    raise ERangeError.Create('YamlNode.ScalarValue: Type_ <> yamlScalarNode');
+  if Assigned(Node.data.scalar_value) then
+    SetString(Temp, Node.data.scalar_value, Node.data.scalar_length);
+  Result := UTF8Decode(Temp);
+end;
+
+function TYamlNodeImpl.GetScalarStyle: TYamlScalarStyle;
+var
+  Node: PYamlNode;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlScalarNode then
+    raise ERangeError.Create('YamlNode.ScalarStyle: Type_ <> yamlScalarNode');
+  Result := Node.data.scalar_style;
+end;
+
+function TYamlNodeImpl.GetSequenceItems: TIYamlNodeDynArray;
+var
+  Node: PYamlNode;
+  i, L: Integer;
+  Start, Top: PAnsiChar;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlSequenceNode then
+    raise ERangeError.Create('YamlNode.SequenceItems: Type_ <> yamlSequenceNode');
+  if Node.data.sequence_items_start <> Node.data.sequence_items_top then
+  begin
+    Start := PAnsiChar(Node.data.sequence_items_start);
+    Top := PAnsiChar(Node.data.sequence_items_top);
+    L := (Top - Start) div SizeOf(YamlThin.TYamlNodeItem);
+    SetLength(Result, L);
+    for i := 0 to L - 1 do
+    begin
+      Result[i] := TYamlNodeImpl.Create(FDocument, FDocumentInterface,
+        YamlThin.PYamlNodeItem(Pointer(Start + i * SizeOf(YamlThin.TYamlNodeItem)))^ - 1);
+    end;
+  end;
+end;
+
+procedure TYamlNodeImpl.AppendSequenceItem(Item: IYamlNode);
+var
+  Node: PYamlNode;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlSequenceNode then
+    raise ERangeError.Create('YamlNode.AppendSequenceItem: Type_ <> yamlSequenceNode');
+  if not Assigned(Item) then
+    raise ERangeError.Create('YamlNode.AppendSequenceItem: Item = nil');
+  if _yaml_document_append_sequence_item(FDocument^, FId, Item.Id) = 0 then
+    raise EYamlMemoryError.Create('YamlNode.AppendSequenceItem: out of memory');
+end;
+
+function TYamlNodeImpl.GetSequenceStyle: TYamlSequenceStyle;
+var
+  Node: PYamlNode;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlSequenceNode then
+    raise ERangeError.Create('YamlNode.SequenceStyle: Type_ <> yamlSequenceNode');
+  Result := Node.data.sequence_style;
+end;
+
+function TYamlNodeImpl.GetMappingPairs: TYamlNodePairDynArray;
+var
+  Node: PYamlNode;
+  i, L: Integer;
+  Start, Top: PAnsiChar;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlMappingNode then
+    raise ERangeError.Create('YamlNode.MappingPairs: Type_ <> yamlMappingNode');
+  if Node.data.mapping_pairs_start <> Node.data.mapping_pairs_top then
+  begin
+    Start := PAnsiChar(Node.data.mapping_pairs_start);
+    Top := PAnsiChar(Node.data.mapping_pairs_top);
+    L := (Top - Start) div SizeOf(YamlThin.TYamlNodePair);
+    SetLength(Result, L);
+    for i := 0 to L - 1 do
+    begin
+      Result[i].Key := TYamlNodeImpl.Create(FDocument, FDocumentInterface,
+        YamlThin.PYamlNodePair(Pointer(Start + i * SizeOf(YamlThin.TYamlNodePair))).key - 1);
+      Result[i].Value := TYamlNodeImpl.Create(FDocument, FDocumentInterface,
+        YamlThin.PYamlNodePair(Pointer(Start + i * SizeOf(YamlThin.TYamlNodePair))).value - 1);
+    end;
+  end;
+end;
+
+procedure TYamlNodeImpl.AppendMappingPair(Key, Value: IYamlNode);
+var
+  Node: PYamlNode;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlMappingNode then
+    raise ERangeError.Create('YamlNode.AppendMappingPair: Type_ <> yamlMappingNode');
+  if not Assigned(Key) then
+    raise ERangeError.Create('YamlNode.AppendMappingPair: Key = nil');
+  if not Assigned(Value) then
+    raise ERangeError.Create('YamlNode.AppendMappingPair: Value = nil');
+  if _yaml_document_append_mapping_pair(FDocument^, FId, Key.Id, Value.Id) = 0 then
+    raise EYamlMemoryError.Create('YamlNode.AppendMappingPair: out of memory');
+end;
+
+function TYamlNodeImpl.GetMappingStyle: TYamlMappingStyle;
+var
+  Node: PYamlNode;
+begin
+  Node := GetNode;
+  if Node.type_ <> yamlMappingNode then
+    raise ERangeError.Create('YamlNode.MappingStyle: Type_ <> yamlMappingNode');
+  Result := Node.data.mapping_style;
+end;
+
+function TYamlNodeImpl.GetStartMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FDocument.start_mark));
+end;
+
+function TYamlNodeImpl.GetEndMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FDocument.end_mark));
+end;
+
+constructor TYamlDocumentImpl.Create(const VersionDirective: IYamlVersionDirective;
+  const TagDirectives: array of IYamlTagDirective;
+  StartImplicit, EndImplicit: Boolean);
+var
+  InternalVersionDirective: TYamlVersionDirective;
+  InternalVersionDirectivePtr: PYamlVersionDirective;
+  InternalTagDirectives: array of TYamlTagDirective;
+  InternalTagDirectivesStr: array of UTF8String;
+  InternalTagDirectiveStart, InternalTagDirectiveEnd: PYamlTagDirective;
+  i, j, L: Integer;
+begin
+  inherited Create;
+  InternalVersionDirectivePtr := nil;
+  if Assigned(VersionDirective) then
+  begin
+    InternalVersionDirective.major := VersionDirective.Major;
+    InternalVersionDirective.minor := VersionDirective.Minor;
+    InternalVersionDirectivePtr := @InternalVersionDirective;
+  end;
+
+  InternalTagDirectiveStart := nil;
+  InternalTagDirectiveEnd := nil;
+  L := Length(TagDirectives);
+  if L <> 0 then
+  begin
+    SetLength(InternalTagDirectives, L + 1);
+    SetLength(InternalTagDirectivesStr, L * 2);
+    j := 0;
+    for i := 0 to L - 1 do
+      if Assigned(TagDirectives[i]) then
+      begin
+        InternalTagDirectivesStr[j * 2] := UTF8Encode(TagDirectives[i].Handle);
+        InternalTagDirectivesStr[j * 2 + 1] := UTF8Encode(TagDirectives[i].Prefix);
+        InternalTagDirectives[j].handle := PYamlChar(InternalTagDirectivesStr[j * 2]);
+        InternalTagDirectives[j].prefix := PYamlChar(InternalTagDirectivesStr[j * 2 + 1]);
+        Inc(j);
+      end;
+    InternalTagDirectiveStart := @(InternalTagDirectives[0]);
+    InternalTagDirectiveEnd := @(InternalTagDirectives[j]);
+  end;
+
+  if _yaml_document_initialize(FDocument,
+    InternalVersionDirectivePtr,
+    InternalTagDirectiveStart,
+    InternalTagDirectiveEnd,
+    Integer(StartImplicit), Integer(EndImplicit)) = 0 then
+    raise EYamlMemoryError.Create('YamlDocument.Create: out of memory');
+end;
+
+class function YamlDocument.Create(const VersionDirective: IYamlVersionDirective;
+  const TagDirectives: array of IYamlTagDirective;
+  StartImplicit, EndImplicit: Boolean): IYamlDocument;
+begin
+  Result := TYamlDocumentImpl.Create(VersionDirective, TagDirectives,
+    StartImplicit, EndImplicit);
+end;
+
+destructor TYamlDocumentImpl.Destroy;
+begin
+  _yaml_document_delete(FDocument);
+  inherited Destroy;
+end;
+
+function TYamlDocumentImpl.GetNodes: TIYamlNodeDynArray;
+var
+  i, L: Integer;
+  Start, Top: PAnsiChar;
+begin
+  if FDocument.nodes_start <> FDocument.nodes_top then
+  begin
+    Start := PAnsiChar(FDocument.nodes_start);
+    Top := PAnsiChar(FDocument.nodes_top);
+    L := (Top - Start) div SizeOf(YamlThin.TYamlNode);
+    SetLength(Result, L);
+    for i := 0 to L - 1 do
+    begin
+      Result[i] := TYamlNodeImpl.Create(@FDocument, Self, i);
+    end;
+  end;
+end;
+
+function TYamlDocumentImpl.GetRootNode: IYamlNode;
+begin
+  if FDocument.nodes_start <> FDocument.nodes_top then
+    Result := nil
+  else
+    Result := TYamlNodeImpl.Create(@FDocument, Self, 0);
+end;
+
+function TYamlDocumentImpl.GetVersionDirective: IYamlVersionDirective;
+begin
+  Result := TYamlVersionDirectiveImpl.Create(@(FDocument.version_directive));
+end;
+
+function TYamlDocumentImpl.GetTagDirectives: TIYamlTagDirectiveDynArray;
+var
+  Start, Finish: PAnsiChar;
+  i, L: Integer;
+begin
+  Start := PAnsiChar(Pointer(FDocument.tag_directives_start));
+  Finish := PAnsiChar(Pointer(FDocument.tag_directives_end));
+  L := (Finish - Start) div SizeOf(TYamlTagDirective);
+  for i := 0 to L - 1 do
+  begin
+    Result[i] := TYamlTagDirectiveImpl.Create(PYamlTagDirective(Pointer(Start + i * SizeOf(TYamlTagDirective))));
+  end;
+end;
+
+function TYamlDocumentImpl.GetStartImplicit: Boolean;
+begin
+  Result := FDocument.start_implicit <> 0;
+end;
+
+function TYamlDocumentImpl.GetEndImplicit: Boolean;
+begin
+  Result := FDocument.end_implicit <> 0;
+end;
+
+function TYamlDocumentImpl.GetStartMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FDocument.start_mark));
+end;
+
+function TYamlDocumentImpl.GetEndMark: IYamlMark;
+begin
+  Result := TYamlMarkImpl.Create(@(FDocument.end_mark));
+end;
+
+function TYamlDocumentImpl.CreateScalar(const Tag, Value: YamlString; Style: TYamlScalarStyle): IYamlNode;
+var
+  InternalTag, InternalValue: UTF8String;
+  NodeId: Integer;
+begin
+  InternalTag := UTF8Encode(Tag);
+  InternalValue := UTF8Encode(Value);
+  NodeId := _yaml_document_add_scalar(FDocument, PYamlChar(InternalTag),
+    PYamlChar(InternalValue), Length(InternalValue), Style);
+  if NodeId = 0 then
+    raise EYamlMemoryError.Create('YamlDocument.CreateScalar: out of memory');
+  Result := TYamlNodeImpl.Create(@FDocument, Self, NodeId - 1);
+end;
+
+function TYamlDocumentImpl.CreateSequence(const Tag: YamlString; Style: TYamlScalarStyle): IYamlNode;
+var
+  InternalTag: UTF8String;
+  NodeId: Integer;
+begin
+  InternalTag := UTF8Encode(Tag);
+  NodeId := _yaml_document_add_sequence(FDocument, PYamlChar(InternalTag),
+    Style);
+  if NodeId = 0 then
+    raise EYamlMemoryError.Create('YamlDocument.CreateSequence: out of memory');
+  Result := TYamlNodeImpl.Create(@FDocument, Self, NodeId - 1);
+end;
+
+function TYamlDocumentImpl.CreateMapping(const Tag: YamlString; Style: TYamlMappingStyle): IYamlNode;
+var
+  InternalTag: UTF8String;
+  NodeId: Integer;
+begin
+  InternalTag := UTF8Encode(Tag);
+  NodeId := _yaml_document_add_mapping(FDocument, PYamlChar(InternalTag),
+    Style);
+  if NodeId = 0 then
+    raise EYamlMemoryError.Create('YamlDocument.CreateMapping: out of memory');
+  Result := TYamlNodeImpl.Create(@FDocument, Self, NodeId - 1);
 end;
 
 end.
