@@ -1074,8 +1074,10 @@ type
     (**
      * @}
      *)
+     
   end;
   PYamlParser = type Pointer;
+  PYamlParserError = ^TYamlParserError;
 var
   SizeOfTYamlParser : Integer; // initialized at runtime
 
@@ -1518,16 +1520,26 @@ end;
 
 function _malloc(Size: Integer): Pointer; cdecl;
 begin
-  GetMem(Result, Size);
+  try
+    GetMem(Result, Size);
+  except
+    on EOutOfMemory do
+      Result := nil;
+  end;
 end;
 
 function _realloc(P: Pointer; Size: Integer): Pointer; cdecl;
 begin
   Result := P;
-  ReallocMem(result,Size);
+  try
+    ReallocMem(Result, Size);
+  except
+    on EOutOfMemory do
+      Result := nil;
+  end;
 end;
 
-procedure _free(AppData, Block: Pointer); cdecl;
+procedure _free(Block: Pointer); cdecl;
 begin
   FreeMem(Block);
 end;

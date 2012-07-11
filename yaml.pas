@@ -1235,9 +1235,9 @@ end;
 type
   TYamlTokenImpl = class(TInterfacedObject, IYamlToken)
   private
-    FToken: PYamlToken;
+    FToken: TYamlToken;
   public
-    constructor Create(Token: PYamlToken); // acquires Token!
+    constructor Create(var Token: PYamlToken);
     destructor Destroy; override;
     function GetType_: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
@@ -1266,17 +1266,15 @@ type
     property EndMark: IYamlMark read GetEndMark;
   end;
 
-constructor TYamlTokenImpl.Create(Token: PYamlToken); // acquires Token!
+constructor TYamlTokenImpl.Create(var Token: PYamlToken);
 begin
-  if not Assigned(Token) then
-    raise ERangeError.Create('TYamlTokenImpl.Create: Token = nil');
   inherited Create;
-  FToken := Token;
+  Token := @FToken;
 end;
 
 destructor TYamlTokenImpl.Destroy;
 begin
-  _yaml_token_delete(FToken);
+  _yaml_token_delete(@FToken);
   inherited Destroy;
 end;
 
@@ -2163,7 +2161,10 @@ end;
 type
   TYamlParserImpl = class(TInterfacedObject)
   protected
+    FDone: Boolean;
     FParser: PYamlParser;
+    FParserError: PYamlParserError;
+    FParserMemory: TByteDynArray;
     procedure RaiseYamlException;
   public
     constructor Create;
@@ -2206,7 +2207,9 @@ end;
 constructor TYamlParserImpl.Create;
 begin
   inherited Create;
-  GetMem(FParser, SizeOfTYamlParser);
+  SetLength(FParserMemory, SizeOfTYamlParser);
+  FParser := PYamlParser(Pointer(@(FParserMemory[0])));
+  FParserError := PYamlParserError(Pointer(@(FParserMemory[0])));
   if _yaml_parser_initialize(FParser) <> 0 then
     raise EYamlMemoryError.Create('YamlParser.Create: out of memory');
 end;
@@ -2214,13 +2217,22 @@ end;
 destructor TYamlParserImpl.Destroy;
 begin
   _yaml_parser_delete(FParser);
-  FreeMem(FParser);
   inherited Destroy;
 end;
 
 function TYamlTokenParser.Next(var Token: IYamlToken): Boolean;
+var
+  Temp: PYamlToken;
+  TempToken: IYamlToken;
 begin
-  // TODO: starting from here
+  Result := not FDone;
+  if FDone then
+    Exit;
+  TempToken := TYamlTokenImpl.Create(Temp);
+  if _yaml_parser_scan(FParser, Temp) = 0 then
+    RaiseYamlException;
+  FDone := Temp.data.type_ = yamlStreamEndToken;
+  Token := TempToken;
 end;
 
 function TYamlEventParserImpl.Next(var Event: IYamlEvent): Boolean;
