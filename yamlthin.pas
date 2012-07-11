@@ -1048,7 +1048,36 @@ type
  * family of functions.
  *)
 
-type PYamlParser = type Pointer;
+type
+  TYamlParserError = record
+
+    (**
+     * @name Error handling
+     * @{
+     *)
+
+    (** Error type. *)
+    error: TYamlErrorType;
+    (** Error description. *)
+    problem: PYamlChar;
+    (** The byte about which the problem occured. *)
+    problem_offset: Integer;
+    (** The problematic value (@c -1 is none). *)
+    problem_value: Integer;
+    (** The problem position. *)
+    problem_mark: TYamlMark;
+    (** The error context. *)
+    context: PYamlChar;
+    (** The context position. *)
+    context_mark: TYamlMark;
+
+    (**
+     * @}
+     *)
+  end;
+  PYamlParser = type Pointer;
+var
+  SizeOfTYamlParser : Integer; // initialized at runtime
 
 (**
  * Initialize a parser.
@@ -1266,7 +1295,10 @@ type TYamlEmitterState = (
  * family of functions.
  *)
 
-type PYamlEmitter = type Pointer;
+type
+  PYamlEmitter = type Pointer;
+var
+  SizeOfTYamlEmitter: Integer; // initialized at runtime
 
 (**
  * Initialize an emitter.
@@ -1462,9 +1494,6 @@ function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
 (** @} *)
 
-procedure _yaml_delphibridge_getsizes(var yaml_parser_size,
-  yaml_emitter_size: Integer); cdecl; external;
-
 implementation
 
 //-//-//-//-//-//-//-//-//
@@ -1572,6 +1601,13 @@ function  _yaml_string_join(var a_start, a_pointer, a_end, b_start, b_pointer, b
 function _yaml_stack_extend(var start, top, end_ : Pointer) : Integer; cdecl; external;
 function _yaml_queue_extend(var start, head, tail, end_ : Pointer): Integer; cdecl; external;
 
+//-//-//-//-//-//-//-//-//-//
+
+// delphibridge.c
+
+procedure _yaml_delphibridge_getsizes(var yaml_parser_size,
+  yaml_emitter_size: Integer); cdecl; external;
+
 (* *)
 {$L 'api.obj'}
 {$L 'dumper.obj'}
@@ -1584,4 +1620,6 @@ function _yaml_queue_extend(var start, head, tail, end_ : Pointer): Integer; cde
 {$L 'delphibridge.obj'}
 (* *)
 
+initialization
+  _yaml_delphibridge_getsizes(SizeOfTYamlParser, SizeOfTYamlEmitter);
 end.

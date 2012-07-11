@@ -1077,7 +1077,6 @@ begin
   _yaml_get_version(Major, Minor, Result);
 end;
 
-// TODO: internal API to get PYamlVersionDirective
 type
   TYamlVersionDirectiveImpl = class(TInterfacedObject, IYamlVersionDirective)
   private
@@ -2160,5 +2159,96 @@ begin
     raise EYamlMemoryError.Create('YamlDocument.CreateMapping: out of memory');
   Result := TYamlNodeImpl.Create(@FDocument, Self, NodeId - 1);
 end;
+
+type
+  TYamlParserImpl = class(TInterfacedObject)
+  protected
+    FParser: PYamlParser;
+    procedure RaiseYamlException;
+  public
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
+  TYamlTokenParser = class(TYamlParserImpl, IYamlTokenParser)
+  public
+    function Next(var Token: IYamlToken): Boolean;
+  end;
+  TYamlEventParserImpl = class(TYamlParserImpl, IYamlEventParser)
+  public
+    function Next(var Event: IYamlEvent): Boolean;
+  end;
+  TYamlDocumentParserImpl = class(TYamlParserImpl, IYamlDocumentParser)
+  public
+    function Next(var Document: IYamlDocument): Boolean;
+  end;
+  TYamlParserFactoryImpl = class(TInterfacedObject, IYamlParserFactory)
+  protected
+    procedure Init; virtual; abstract;
+  public
+    function CreateTokenParser: IYamlTokenParser;
+    function CreateEventParser: IYamlEventParser;
+    function CreateDocumentParser: IYamlDocumentParser;
+  end;
+  TYamlParserFactoryBuiltInString = class(TYamlParserFactoryImpl)
+  private
+    FInput: UTF8String;
+    FEncoding: TYamlEncoding;
+  public
+    constructor Create(const Input; Size: Integer; Encoding: TYamlEncoding);
+  end;
+
+procedure TYamlParserImpl.RaiseYamlException;
+begin
+  // TODO: raise yaml parser exceptions
+end;
+
+constructor TYamlParserImpl.Create;
+begin
+  inherited Create;
+  GetMem(FParser, SizeOfTYamlParser);
+  if _yaml_parser_initialize(FParser) <> 0 then
+    raise EYamlMemoryError.Create('YamlParser.Create: out of memory');
+end;
+
+destructor TYamlParserImpl.Destroy;
+begin
+  _yaml_parser_delete(FParser);
+  FreeMem(FParser);
+  inherited Destroy;
+end;
+
+function TYamlTokenParser.Next(var Token: IYamlToken): Boolean;
+begin
+  // TODO: starting from here
+end;
+
+function TYamlEventParserImpl.Next(var Event: IYamlEvent): Boolean;
+begin
+
+end;
+
+function TYamlDocumentParserImpl.Next(var Document: IYamlDocument): Boolean;
+begin
+
+end;
+
+
+
+function YamlParser(const Input; Size: Integer;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
+function YamlParser(Input: PAnsiChar; Size: Integer;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
+function YamlParser(Input: UTF8String;
+  Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlParserFactory; overload;
+function YamlParser(Input: WideString;
+  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
+function YamlParser(Input: PWideChar; SizeInWideChars: Integer;
+  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
+function YamlParser(Input: TByteDynArray;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
+function YamlParser(Input: TStream;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
+
 
 end.
