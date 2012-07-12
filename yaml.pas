@@ -907,15 +907,15 @@ type
    * @param[in]       size    The length of the source data in bytes.
    *)
 
-function YamlParser(const Input; Size: Integer;
+function YamlParser(const Input; Size: Integer; Copy: Boolean = True;
   Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PAnsiChar; Size: Integer;
+function YamlParser(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
   Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
 function YamlParser(Input: UTF8String;
   Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlParserFactory; overload;
 function YamlParser(Input: WideString;
   Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PWideChar; SizeInWideChars: Integer;
+function YamlParser(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
   Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
 function YamlParser(Input: TByteDynArray;
   Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
@@ -1237,7 +1237,7 @@ type
   private
     FToken: TYamlToken;
   public
-    constructor Create(var Token: PYamlToken);
+    constructor Create(out Token: PYamlToken);
     destructor Destroy; override;
     function GetType_: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
@@ -1266,7 +1266,7 @@ type
     property EndMark: IYamlMark read GetEndMark;
   end;
 
-constructor TYamlTokenImpl.Create(var Token: PYamlToken);
+constructor TYamlTokenImpl.Create(out Token: PYamlToken);
 begin
   inherited Create;
   Token := @FToken;
@@ -1800,7 +1800,8 @@ type
   public
     constructor Create(const VersionDirective: IYamlVersionDirective;
       const TagDirectives: array of IYamlTagDirective;
-      StartImplicit, EndImplicit: Boolean);
+      StartImplicit, EndImplicit: Boolean); overload;
+    constructor Create(out Document: PYamlDocument); overload;
     destructor Destroy; override;
     function GetNodes: TIYamlNodeDynArray;
     function GetRootNode: IYamlNode;
@@ -1988,6 +1989,12 @@ end;
 function TYamlNodeImpl.GetEndMark: IYamlMark;
 begin
   Result := TYamlMarkImpl.Create(@(FDocument.end_mark));
+end;
+
+constructor TYamlDocumentImpl.Create(out Document: PYamlDocument);
+begin
+  inherited Create;
+  Document := @FDocument;
 end;
 
 constructor TYamlDocumentImpl.Create(const VersionDirective: IYamlVersionDirective;
@@ -2236,31 +2243,49 @@ begin
 end;
 
 function TYamlEventParserImpl.Next(var Event: IYamlEvent): Boolean;
+var
+  Temp: PYamlEvent;
+  TempEvent: IYamlEvent;
 begin
-
+  Result := not FDone;
+  if FDone then
+    Exit;
+  TempEvent := TYamlEventImpl.Create(Temp);
+  if _yaml_parser_parse(FParser, Temp) = 0 then
+    RaiseYamlException;
+  FDone := Temp.data.type_ = yamlStreamEndEvent;
+  Event := TempEvent;
 end;
 
 function TYamlDocumentParserImpl.Next(var Document: IYamlDocument): Boolean;
+var
+  Temp: PYamlDocument;
+  TempDocument: IYamlDocument;
 begin
-
+  Result := not FDone;
+  if FDone then
+    Exit;
+  TempDocument := TYamlDocumentImpl.Create(Temp);
+  if _yaml_parser_load(FParser, Temp) = 0 then
+    RaiseYamlException;
+  FDone := not Assigned(_yaml_document_get_root_node(Temp));
+  Result := not FDone;
+  if FDone then
+    Exit;
+  Document := TempDocument;
 end;
 
-
-
-function YamlParser(const Input; Size: Integer;
+function YamlParser(const Input; Size: Integer; Copy: Boolean = True;
   Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PAnsiChar; Size: Integer;
+function YamlParser(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
   Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
 function YamlParser(Input: UTF8String;
   Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlParserFactory; overload;
 function YamlParser(Input: WideString;
   Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PWideChar; SizeInWideChars: Integer;
+function YamlParser(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
   Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
 function YamlParser(Input: TByteDynArray;
   Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: TStream;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-
 
 end.
