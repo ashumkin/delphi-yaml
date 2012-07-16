@@ -829,7 +829,10 @@ type
    * @a size_read to @c 0 and return @c 1.
    *)
 
-  // yaml_read_handler_t
+  IYamlInput = interface
+  ['{FD5414B7-6C22-4BA5-ADF0-326998A02324}']
+    function Read(var buffer; Size: Integer): Integer;
+  end;
 
   (**
    * This structure holds information about a potential simple key.
@@ -855,24 +858,7 @@ type
    * family of functions.
    *)
 
-  IYamlTokenParser = interface
-  ['{89C50981-0DB4-4E54-8412-FE9FD999B608}']
-    function Next(var Token: IYamlToken): Boolean;
-  end;
-  IYamlEventParser = interface
-  ['{48F38085-102F-44C3-A05B-9D2FCA912731}']
-    function Next(var Event: IYamlEvent): Boolean;
-  end;
-  IYamlDocumentParser = interface
-  ['{6FDBFA28-C462-4A78-ACF5-974021ADBE67}']
-    function Next(var Document: IYamlDocument): Boolean;
-  end;
-  IYamlParserFactory = interface
-  ['{AB8C3012-1294-423F-8B5A-91BB884E6A05}']
-    function CreateTokenParser: IYamlTokenParser;
-    function CreateEventParser: IYamlEventParser;
-    function CreateDocumentParser: IYamlDocumentParser;
-  end;
+  // yaml_parser_t
 
   (**
    * Initialize a parser.
@@ -907,18 +893,20 @@ type
    * @param[in]       size    The length of the source data in bytes.
    *)
 
-function YamlParser(const Input; Size: Integer; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: UTF8String;
-  Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlParserFactory; overload;
-function YamlParser(Input: WideString;
-  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: TByteDynArray;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
+  YamlInput = class
+  public
+    class function Create(const Input; Size: Integer; Copy: Boolean = True;
+      Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
+    class function Create(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
+      Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
+    class function Create(Input: UTF8String;
+      Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlInput; overload;
+    class function Create(Input: WideString;
+      Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
+    class function Create(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
+      Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
+    class function Create(Input: TByteDynArray;
+      Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
 
   (**
    * Set a file input.
@@ -930,9 +918,9 @@ function YamlParser(Input: TByteDynArray;
    * @param[in]       file    An open file.
    *)
 
-function YamlParser(Input: TStream;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-//type
+    class function Create(Input: TStream;
+      Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
+  end;
 
   (**
    * Set a generic input handler.
@@ -975,7 +963,14 @@ function YamlParser(Input: TStream;
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  // yaml_parser_scan
+  IYamlTokenParser = interface
+  ['{89C50981-0DB4-4E54-8412-FE9FD999B608}']
+    function Next(var Token: IYamlToken): Boolean;
+  end;
+  YamlTokenParser = class
+  public
+    class function Create(const Input: IYamlInput): IYamlTokenParser;
+  end;
 
   (**
    * Parse the input stream and produce the next parsing event.
@@ -998,7 +993,14 @@ function YamlParser(Input: TStream;
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  // yaml_parser_parse
+  IYamlEventParser = interface
+  ['{48F38085-102F-44C3-A05B-9D2FCA912731}']
+    function Next(var Event: IYamlEvent): Boolean;
+  end;
+  YamlEventParser = class
+  public
+    class function Create(const Input: IYamlInput): IYamlEventParser;
+  end;
 
   (**
    * Parse the input stream and produce the next YAML document.
@@ -1022,7 +1024,14 @@ function YamlParser(Input: TStream;
    * @return @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  // yaml_parser_load
+  IYamlDocumentParser = interface
+  ['{6FDBFA28-C462-4A78-ACF5-974021ADBE67}']
+    function Next(var Document: IYamlDocument): Boolean;
+  end;
+  YamlDocumentParser = class
+  public
+    class function Create(const Input: IYamlInput): IYamlDocumentParser;
+  end;
 
   (** @} *)
 
