@@ -2199,21 +2199,6 @@ type
   public
     function Next(var Document: IYamlDocument): Boolean;
   end;
-  TYamlParserFactoryImpl = class(TInterfacedObject, IYamlParserFactory)
-  protected
-    procedure Init; virtual; abstract;
-  public
-    function CreateTokenParser: IYamlTokenParser;
-    function CreateEventParser: IYamlEventParser;
-    function CreateDocumentParser: IYamlDocumentParser;
-  end;
-  TYamlParserFactoryBuiltInString = class(TYamlParserFactoryImpl)
-  private
-    FInput: UTF8String;
-    FEncoding: TYamlEncoding;
-  public
-    constructor Create(const Input; Size: Integer; Encoding: TYamlEncoding);
-  end;
 
 procedure TYamlParserImpl.RaiseYamlException;
 begin
@@ -2284,17 +2269,34 @@ begin
   Document := TempDocument;
 end;
 
-function YamlParser(const Input; Size: Integer; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: UTF8String;
-  Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlParserFactory; overload;
-function YamlParser(Input: WideString;
-  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlParserFactory; overload;
-function YamlParser(Input: TByteDynArray;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlParserFactory; overload;
+type
+  TYamlInputImpl = class(TInterfacedObject, IYamlInput)
+  public
+    function Read(var buffer; Size: Integer): Integer; virtual; abstract;
+  end;
+
+  IYamlInputMemory = interface
+  ['{903F0B4E-3806-458A-8657-A2CD791637FC}']
+
+  end;
+  TYamlInputMemory = class(TYamlInputImpl, IYamlInputMemory)
+  public
+    function Read(var buffer; Size: Integer): Integer; override;
+  end;
+
+class function YamlInput.Create(const Input; Size: Integer; Copy: Boolean = True;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
+class function YamlInput.Create(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
+class function YamlInput.Create(Input: UTF8String;
+  Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlInput; overload;
+class function YamlInput.Create(Input: WideString;
+  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
+class function YamlInput.Create(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
+  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
+class function YamlInput.Create(Input: TByteDynArray;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
+class function YamlInput.Create(Input: TStream;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
 
 end.
