@@ -18,7 +18,7 @@ type
    * @{
    *)
 
-  IYamlVersion = interface
+  IYamlVersion = interface(IInterface)
   ['{0B1F5CC2-3E4C-4D4C-922B-6E3F1EB871D8}']
     function GetAsString: string;
     function GetMajor: Integer;
@@ -61,7 +61,7 @@ type
   YamlString = WideString; // change to UnicodeString on XE2
 
   (** The version directive data. *)
-  IYamlVersionDirective = interface
+  IYamlVersionDirective = interface(IInterface)
   ['{90DD4239-7F44-4B5A-B1D2-F5DCE8C1D41A}']
     function GetMajor: Integer;
     function GetMinor: Integer;
@@ -76,7 +76,7 @@ type
   end;
 
   (** The tag directive data. *)
-  IYamlTagDirective = interface
+  IYamlTagDirective = interface(IInterface)
   ['{C97DAEAC-9F62-4001-A23F-EF27ED5BF48D}']
     function GetHandle: YamlString;
     function GetPrefix: YamlString;
@@ -107,9 +107,25 @@ type
   EYamlMemoryError = class(EOutOfMemory);
 
   (** Cannot read or decode the input stream. *)
-  EYamlReaderError = class(EYamlError);
+  EYamlReaderError = class(EYamlError)
+  protected
+    FProblem: YamlString;
+    FProblemValue: Integer;
+    FProblemOffset: Integer;
+  public
+    constructor Create(const Problem: YamlString; ProblemValue, ProblemOffset: Integer);
+    property Problem: YamlString read FProblem;
+    property ProblemValue: Integer read FProblemValue;
+    property ProblemOffset: Integer read FProblemOffset;
+  end;
   (** Cannot scan the input stream. *)
-  EYamlScannerError = class(EYamlError);
+  EYamlScannerError = class(EYamlError)
+  protected
+    FContext, FProblem: YamlString;
+    FContextLine, FContextColumn: Integer;
+  public
+
+  end;
   (** Cannot parse the input stream. *)
   EYamlParserError = class(EYamlError);
   (** Cannot compose a YAML document. *)
@@ -121,7 +137,7 @@ type
   EYamlEmitterError = class(EYamlError);
 
   (** The pointer position. *)
-  IYamlMark = interface
+  IYamlMark = interface(IInterface)
   ['{DB5BD8F3-5703-44D6-9237-D014E0748459}']
     function GetIndex: Integer;
     function GetLine: Integer;
@@ -163,7 +179,7 @@ type
   TYamlTokenType = YamlThin.TYamlTokenType;
 
   (** The token structure. *)
-  IYamlToken = interface
+  IYamlToken = interface(IInterface)
   ['{AB5E049D-123D-45EB-BFB3-D7B5424AECB4}']
     function GetType_: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
@@ -241,7 +257,7 @@ type
   TYamlEventType = YamlThin.TYamlEventType;
 
   (** The event structure. *)
-  IYamlEvent = interface
+  IYamlEvent = interface(IInterface)
   ['{12F279D3-BADF-4F5E-8E4E-D895D0A20AF0}']
     function GetType_: TYamlEventType;
     function GetStreamStartEncoding: TYamlEncoding;
@@ -581,7 +597,7 @@ type
   TYamlNodePairDynArray = array of TYamlNodePair;
 
   (** The node structure. *)
-  IYamlNode = interface
+  IYamlNode = interface(IInterface)
   ['{4A158305-AC46-41AA-86E5-10AC082C14D9}']
     function GetDocument: IYamlDocument;
     function GetId: Integer; // ids start from 0 while in thin libyaml they start from 1
@@ -633,7 +649,7 @@ type
   end;
 
   (** The document structure. *)
-  IYamlDocument = interface
+  IYamlDocument = interface(IInterface)
   ['{276D0A02-F531-4DBC-9459-44D2CF6E7AED}']
     function GetNodes: TIYamlNodeDynArray;
     function GetRootNode: IYamlNode; // nil when document is empty
@@ -829,9 +845,13 @@ type
    * @a size_read to @c 0 and return @c 1.
    *)
 
-  IYamlInput = interface
+  IYamlInput = interface(IInterface)
   ['{FD5414B7-6C22-4BA5-ADF0-326998A02324}']
-    function Read(var buffer; Size: Integer): Integer;
+    function GetIsEof: Boolean;
+    function Read(var Buffer; Size: Integer): Integer;
+    function GetEncoding: TYamlEncoding;
+    property IsEof: Boolean read GetIsEof;
+    property Encoding: TYamlEncoding read GetEncoding;
   end;
 
   (**
@@ -899,13 +919,13 @@ type
       Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
     class function Create(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
       Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
-    class function Create(Input: UTF8String;
+    class function Create(const Input: UTF8String;
       Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlInput; overload;
-    class function Create(Input: WideString;
+    class function Create(const Input: WideString;
       Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
-    class function Create(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
+    class function Create(Input: PWideChar; SizeInWideChars: Integer = -1; Copy: Boolean = True;
       Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
-    class function Create(Input: TByteDynArray;
+    class function Create(const Input: TByteDynArray;
       Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
 
   (**
@@ -963,7 +983,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  IYamlTokenParser = interface
+  IYamlTokenParser = interface(IInterface)
   ['{89C50981-0DB4-4E54-8412-FE9FD999B608}']
     function Next(var Token: IYamlToken): Boolean;
   end;
@@ -993,7 +1013,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  IYamlEventParser = interface
+  IYamlEventParser = interface(IInterface)
   ['{48F38085-102F-44C3-A05B-9D2FCA912731}']
     function Next(var Event: IYamlEvent): Boolean;
   end;
@@ -1024,7 +1044,7 @@ type
    * @return @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  IYamlDocumentParser = interface
+  IYamlDocumentParser = interface(IInterface)
   ['{6FDBFA28-C462-4A78-ACF5-974021ADBE67}']
     function Next(var Document: IYamlDocument): Boolean;
   end;
@@ -1186,6 +1206,17 @@ end;
 function TYamlTagDirectiveImpl.GetPrefix: YamlString;
 begin
   Result := FPrefix;
+end;
+
+constructor EYamlReaderError.Create(const Problem: YamlString; ProblemValue, ProblemOffset: Integer);
+begin
+  if ProblemValue <> -1 then
+    inherited CreateFmt('Reader error: %s: #%x at %d', [Problem, ProblemValue, ProblemOffset])
+  else
+    inherited CreateFmt('Reader error: %s at %d', [Problem, ProblemOffset]);
+  FProblem := Problem;
+  FProblemValue := ProblemValue;
+  FProblemOffset := ProblemOffset;
 end;
 
 type
@@ -2175,19 +2206,240 @@ begin
 end;
 
 type
+  TYamlInputImpl = class(TInterfacedObject, IYamlInput)
+  protected
+    FEncoding: TYamlEncoding;
+    constructor Create(Encoding: TYamlEncoding);
+  public
+    function GetIsEof: Boolean; virtual; abstract;
+    function Read(var Buffer; Size: Integer): Integer; virtual; abstract;
+    function GetEncoding: TYamlEncoding; virtual;
+    property IsEof: Boolean read GetIsEof;
+    property Encoding: TYamlEncoding read GetEncoding;
+  end;
+
+  IYamlInputMemory = interface(IInterface)
+  ['{903F0B4E-3806-458A-8657-A2CD791637FC}']
+    function GetMem: Pointer;
+    function GetSize: Integer;
+    property Mem: Pointer read GetMem;
+    property Size: Integer read GetSize;
+  end;
+
+  TYamlInputMemory = class(TYamlInputImpl, IYamlInputMemory)
+  protected
+    FMem: Pointer;
+    FSize: Integer;
+    FOffset: Integer;
+    constructor Create(const Mem; Size: Integer; Encoding: TYamlEncoding);
+  public
+    function GetIsEof: Boolean; override;
+    function Read(var Buffer; Size: Integer): Integer; override;
+    function GetMem: Pointer;
+    function GetSize: Integer;
+    property Mem: Pointer read GetMem;
+    property Size: Integer read GetSize;
+  end;
+
+  TYamlInputUTF8String = class(TYamlInputMemory)
+  protected
+    FString: UTF8String;
+  public
+    constructor Create(const S: UTF8String; Encoding: TYamlEncoding);
+  end;
+
+  TYamlInputByteDynArray = class(TYamlInputMemory)
+  protected
+    FArray: TByteDynArray;
+  public
+    constructor Create(const A: TByteDynArray; Encoding: TYamlEncoding);
+  end;
+
+  IYamlInputStream = interface(IInterface)
+  ['{87CAB406-13C2-4045-804F-969E6FAFEA1E}']
+    function GetStream: TStream;
+    property Stream: TStream read GetStream;
+  end;
+
+  TYamlInputStream = class(TYamlInputImpl, IYamlInputStream)
+  protected
+    FStream: TStream;
+  public
+    constructor Create(Stream: TStream; Encoding: TYamlEncoding);
+    function GetIsEof: Boolean; override;
+    function Read(var Buffer; Size: Integer): Integer; override;
+    function GetStream: TStream;
+    property Stream: TStream read GetStream;
+  end;
+const
+  IID_IYamlInputMemory : TGUID = '{903F0B4E-3806-458A-8657-A2CD791637FC}';
+  IID_IYamlInputStream : TGUID = '{87CAB406-13C2-4045-804F-969E6FAFEA1E}';
+
+constructor TYamlInputImpl.Create(Encoding: TYamlEncoding);
+begin
+  FEncoding := Encoding;
+  inherited Create;
+end;
+
+function TYamlInputImpl.GetEncoding: TYamlEncoding;
+begin
+  Result := FEncoding;
+end;
+
+constructor TYamlInputMemory.Create(const Mem; Size: Integer; Encoding: TYamlEncoding);
+begin
+  inherited Create(Encoding);
+  FMem := @Mem;
+  FSize := Size;
+end;
+
+function TYamlInputMemory.GetIsEof: Boolean;
+begin
+  Result := FOffset >= FSize;
+end;
+
+function TYamlInputMemory.Read(var Buffer; Size: Integer): Integer;
+begin
+  Result := Size;
+  if Size > 0 then
+  begin
+    if FOffset + Result > FSize then
+      Result := FSize - FOffset;
+    Move(FMem^, buffer, Result);
+  end;
+end;
+
+function TYamlInputMemory.GetMem: Pointer;
+begin
+  Result := FMem;
+end;
+
+function TYamlInputMemory.GetSize: Integer;
+begin
+  Result := FSize;
+end;
+
+constructor TYamlInputUTF8String.Create(const S: UTF8String; Encoding: TYamlEncoding);
+begin
+  FString := S;
+  if FString <> '' then
+    inherited Create(FString[1], Length(FString), Encoding)
+  else
+    inherited Create(nil^, 0, Encoding);
+end;
+
+constructor TYamlInputByteDynArray.Create(const A: TByteDynArray; Encoding: TYamlEncoding);
+begin
+  FArray := A;
+  if Length(FArray) > 0 then
+    inherited Create(FArray[0], Length(FArray), Encoding)
+  else
+    inherited Create(nil^, 0, Encoding);
+end;
+
+constructor TYamlInputStream.Create(Stream: TStream; Encoding: TYamlEncoding);
+begin
+  if not Assigned(Stream) then
+    raise ERangeError.Create('YamlInput.Create: Stream = nil');
+  inherited Create(Encoding);
+  FStream := Stream;
+end;
+
+function TYamlInputStream.GetIsEof: Boolean;
+begin
+  Result := FStream.Position < FStream.Size;
+end;
+
+function TYamlInputStream.Read(var Buffer; Size: Integer): Integer;
+begin
+  Result := FStream.Read(Buffer, Size);
+end;
+
+function TYamlInputStream.GetStream: TStream;
+begin
+  Result := FStream;
+end;
+
+class function YamlInput.Create(const Input; Size: Integer; Copy: Boolean = True;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput;
+var
+  DummyCopy: UTF8String;
+begin
+  if Copy then
+  begin
+    SetString(DummyCopy, PAnsiChar(@Input), Size);
+    Result := TYamlInputUTF8String.Create(DummyCopy, Encoding);
+  end else begin
+    Result := TYamlInputMemory.Create(Input, Size, Encoding);
+  end;
+end;
+
+class function YamlInput.Create(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput;
+begin
+  if Size < 0 then
+    Size := StrLen(Input);
+  Result := Create(Input^, Size, Copy, Encoding);
+end;
+
+class function YamlInput.Create(const Input: UTF8String;
+  Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlInput;
+begin
+  Result := TYamlInputUTF8String.Create(Input, Encoding);
+end;
+
+class function YamlInput.Create(const Input: WideString;
+  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput;
+begin
+  if Input <> '' then
+    Result := Create(Input[1], Length(Input) * 2, True, Encoding)
+  else
+    Result := Create(nil^, 0, False, Encoding);
+end;
+
+class function YamlInput.Create(Input: PWideChar; SizeInWideChars: Integer = -1; Copy: Boolean = True;
+  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput;
+begin
+  if Copy then
+  begin
+    if SizeInWideChars = -1 then
+      Result := Create(WideString(Input), Encoding)
+    else
+      Result := Create(Input^, SizeInWideChars * 2, True, Encoding);
+  end else begin
+    if SizeInWideChars = -1 then
+      SizeInWideChars := Length(WideString(Input));
+    Result := Create(Input^, SizeInWideChars * 2, False, Encoding);
+  end;
+end;
+
+class function YamlInput.Create(const Input: TByteDynArray;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput;
+begin
+  Result := TYamlInputByteDynArray.Create(Input, Encoding);
+end;
+
+class function YamlInput.Create(Input: TStream;
+  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput;
+begin
+  Result := TYamlInputStream.Create(Input, Encoding);
+end;
+
+type
   TYamlParserImpl = class(TInterfacedObject)
   protected
+    FInput: IYamlInput;
     FDone: Boolean;
     FParser: PYamlParser;
     FParserError: PYamlParserError;
     FParserMemory: TByteDynArray;
     procedure RaiseYamlException;
   public
-    constructor Create;
+    constructor Create(const Input: IYamlInput);
     destructor Destroy; override;
   end;
 
-  TYamlTokenParser = class(TYamlParserImpl, IYamlTokenParser)
+  TYamlTokenParserImpl = class(TYamlParserImpl, IYamlTokenParser)
   public
     function Next(var Token: IYamlToken): Boolean;
   end;
@@ -2203,16 +2455,61 @@ type
 procedure TYamlParserImpl.RaiseYamlException;
 begin
   // TODO: raise yaml parser exceptions
+  case FParserError.error of
+  yamlMemoryError:
+    raise EYamlMemoryError.Create('YamlParser: out of memory');
+  yamlReaderError:
+    raise EYamlReaderError.Create(UTF8Decode(FParserError.problem),
+      FParserError.problem_value, FParserError.problem_offset);
+  end;
 end;
 
-constructor TYamlParserImpl.Create;
+function YamlInputAdapter(var data; buffer: PAnsiChar;
+  size: Integer; var size_read: Integer): Integer; cdecl;
 begin
+  try
+    if IYamlInput(data).IsEof then
+    begin
+      size_read := 0;
+      Result := 1;
+    end else
+    begin
+      size_read := IYamlInput(data).Read(buffer^, size);
+      Result := 1;
+    end;
+  except
+    Result := 0;
+  end;
+end;
+
+constructor TYamlParserImpl.Create(const Input: IYamlInput);
+var
+  InputAsIYamlInputMemory: IYamlInputMemory;
+  InputAsIYamlInputStream: IYamlInputStream;
+begin
+  if not Assigned(Input) then
+    raise ERangeError.Create('YamlParser.Create: Input = nil');
   inherited Create;
+  FInput := Input;
   SetLength(FParserMemory, SizeOfTYamlParser);
   FParser := PYamlParser(Pointer(@(FParserMemory[0])));
   FParserError := PYamlParserError(Pointer(@(FParserMemory[0])));
   if _yaml_parser_initialize(FParser) <> 0 then
     raise EYamlMemoryError.Create('YamlParser.Create: out of memory');
+  _yaml_parser_set_encoding(FParser, FInput.Encoding);
+  if Supports(FInput, IID_IYamlInputMemory) then
+  begin
+    InputAsIYamlInputMemory := FInput as IYamlInputMemory;
+    _yaml_parser_set_input_string(FParser,
+      PAnsiChar(InputAsIYamlInputMemory.Mem), InputAsIYamlInputMemory.Size);
+  end else if Supports(FInput, IID_IYamlInputStream) then
+  begin
+    InputAsIYamlInputStream := FInput as IYamlInputStream;
+    _yaml_parser_set_input_file(FParser, InputAsIYamlInputStream.Stream);
+  end else
+  begin
+    _yaml_parser_set_input(FParser, YamlInputAdapter, FInput);
+  end;
 end;
 
 destructor TYamlParserImpl.Destroy;
@@ -2221,7 +2518,7 @@ begin
   inherited Destroy;
 end;
 
-function TYamlTokenParser.Next(var Token: IYamlToken): Boolean;
+function TYamlTokenParserImpl.Next(var Token: IYamlToken): Boolean;
 var
   Temp: PYamlToken;
   TempToken: IYamlToken;
@@ -2234,6 +2531,11 @@ begin
     RaiseYamlException;
   FDone := Temp.data.type_ = yamlStreamEndToken;
   Token := TempToken;
+end;
+
+class function YamlTokenParser.Create(const Input: IYamlInput): IYamlTokenParser;
+begin
+  Result := TYamlTokenParserImpl.Create(Input);
 end;
 
 function TYamlEventParserImpl.Next(var Event: IYamlEvent): Boolean;
@@ -2249,6 +2551,11 @@ begin
     RaiseYamlException;
   FDone := Temp.data.type_ = yamlStreamEndEvent;
   Event := TempEvent;
+end;
+
+class function YamlEventParser.Create(const Input: IYamlInput): IYamlEventParser;
+begin
+  Result := TYamlEventParserImpl.Create(Input);
 end;
 
 function TYamlDocumentParserImpl.Next(var Document: IYamlDocument): Boolean;
@@ -2269,34 +2576,9 @@ begin
   Document := TempDocument;
 end;
 
-type
-  TYamlInputImpl = class(TInterfacedObject, IYamlInput)
-  public
-    function Read(var buffer; Size: Integer): Integer; virtual; abstract;
-  end;
-
-  IYamlInputMemory = interface
-  ['{903F0B4E-3806-458A-8657-A2CD791637FC}']
-
-  end;
-  TYamlInputMemory = class(TYamlInputImpl, IYamlInputMemory)
-  public
-    function Read(var buffer; Size: Integer): Integer; override;
-  end;
-
-class function YamlInput.Create(const Input; Size: Integer; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
-class function YamlInput.Create(Input: PAnsiChar; Size: Integer = -1; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
-class function YamlInput.Create(Input: UTF8String;
-  Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlInput; overload;
-class function YamlInput.Create(Input: WideString;
-  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
-class function YamlInput.Create(Input: PWideChar; SizeInWideChars: Integer - 1; Copy: Boolean = True;
-  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
-class function YamlInput.Create(Input: TByteDynArray;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
-class function YamlInput.Create(Input: TStream;
-  Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
+class function YamlDocumentParser.Create(const Input: IYamlInput): IYamlDocumentParser;
+begin
+  Result := TYamlDocumentParserImpl.Create(Input);
+end;
 
 end.
