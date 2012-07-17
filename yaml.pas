@@ -107,6 +107,7 @@ type
   EYamlMemoryError = class(EOutOfMemory);
 
   (** Cannot read or decode the input stream. *)
+  IYamlMark = interface;
   EYamlReaderError = class(EYamlError)
   protected
     FProblem: YamlString;
@@ -122,12 +123,25 @@ type
   EYamlScannerError = class(EYamlError)
   protected
     FContext, FProblem: YamlString;
-    FContextLine, FContextColumn: Integer;
+    FContextMark, FProblemMark: IYamlMark;
   public
-
+    constructor Create(const Context: YamlString; const ContextMark: IYamlMark;
+      const Problem: YamlString; const ProblemMark: IYamlMark);
+    property Context: YamlString read FContext;
+    property ContextMark: IYamlMark read FContextMark;
+    property Problem: YamlString read FProblem;
+    property ProblemMark: IYamlMark read FProblemMark;
   end;
   (** Cannot parse the input stream. *)
-  EYamlParserError = class(EYamlError);
+  EYamlParserError = class(EYamlError)
+  protected
+    FProblem: YamlString;
+    FProblemMark: IYamlMark;
+  public
+    constructor Create(const Problem: YamlString; const ProblemMark: IYamlMark);
+    property Problem: YamlString read FProblem;
+    property ProblemMark: IYamlMark read FProblemMark;
+  end;
   (** Cannot compose a YAML document. *)
   EYamlComposerError = class(EYamlError);
 
@@ -1060,8 +1074,6 @@ type
 
 implementation
 
-// Thick binding
-
 type
   TYamlVersionImpl = class(TInterfacedObject, IYamlVersion)
   public
@@ -1217,6 +1229,31 @@ begin
   FProblem := Problem;
   FProblemValue := ProblemValue;
   FProblemOffset := ProblemOffset;
+end;
+
+constructor EYamlScannerError.Create(const Context: YamlString; const ContextMark: IYamlMark;
+  const Problem: YamlString; const ProblemMark: IYamlMark);
+begin
+  if Context <> '' then
+    inherited CreateFmt('Scanner error: %s at line %d, column %d'#13#10 +
+      '%s at line %d, column %d',
+      [Context, ContextMark.Line + 1, ContextMark.Column + 1,
+        Problem, ProblemMark.Line + 1, ProblemMark.Column + 1])
+  else
+    inherited CreateFmt('Scanner error: %s at line %d, column %d',
+      [Problem, ProblemMark.Line + 1, ProblemMark.Column + 1]);
+  FContext := Context;
+  FContextMark := ContextMark;
+  FProblem := Problem;
+  FProblemMark := ProblemMark;
+end;
+
+constructor EYamlParserError.Create(const Problem: YamlString; const ProblemMark: IYamlMark);
+begin
+  inherited CreateFmt('Parser error: %s at line %d, column %d',
+    [Problem, ProblemMark.Line + 1, ProblemMark.Column + 1]);
+  FProblem := Problem;
+  FProblemMark := ProblemMark;
 end;
 
 type
@@ -2461,6 +2498,16 @@ begin
   yamlReaderError:
     raise EYamlReaderError.Create(UTF8Decode(FParserError.problem),
       FParserError.problem_value, FParserError.problem_offset);
+  yamlScannerError:
+    raise EYamlScannerError.Create(UTF8Decode(FParserError.context),
+      TYamlMarkImpl.Create(@(FParserError.context_mark)),
+      UTF8Decode(FParserError.problem),
+      TYamlMarkImpl.Create(@(FParserError.problem_mark)));
+  yamlParserError:
+    raise EYamlParserError.Create(UTF8Decode(FParserError.problem),
+      TYamlMarkImpl.Create(@(FParserError.problem_mark)));
+  else
+    raise EYamlError.Create('YamlParser: Internal error');
   end;
 end;
 
