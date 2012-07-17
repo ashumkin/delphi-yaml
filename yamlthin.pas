@@ -3,6 +3,9 @@
  * @brief Thin binding for libyaml.
  *)
 
+{$Z4} // Size of enumerations is 4, don't remove!!!
+
+
 unit YamlThin;
 
 interface
@@ -26,7 +29,7 @@ uses
  * number, and @c Z is the patch version number.
  *)
 
-function _yaml_get_version_string: PAnsiChar; external;
+function _yaml_get_version_string: PAnsiChar; cdecl; external;
 
 (**
  * Get the library version numbers.
@@ -36,7 +39,7 @@ function _yaml_get_version_string: PAnsiChar; external;
  * @param[out]      patch   Patch version number.
  *)
 
-procedure _yaml_get_version(var major, minor, patch: Integer); external;
+procedure _yaml_get_version(var major, minor, patch: Integer); cdecl; external;
 
 (** @} *)
 

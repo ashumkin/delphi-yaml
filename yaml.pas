@@ -1,6 +1,6 @@
 (**
- * @file yaml.h
- * @brief Public interface for libyaml.
+ * @file yaml.pas
+ * @brief Intermediate binding to libyaml
  *)
 
 
@@ -2360,7 +2360,7 @@ constructor TYamlInputUTF8String.Create(const S: UTF8String; Encoding: TYamlEnco
 begin
   FString := S;
   if FString <> '' then
-    inherited Create(FString[1], Length(FString), Encoding)
+    inherited Create(Pointer(FString)^, Length(FString), Encoding)
   else
     inherited Create(nil^, 0, Encoding);
 end;
@@ -2369,7 +2369,7 @@ constructor TYamlInputByteDynArray.Create(const A: TByteDynArray; Encoding: TYam
 begin
   FArray := A;
   if Length(FArray) > 0 then
-    inherited Create(FArray[0], Length(FArray), Encoding)
+    inherited Create(Pointer(FArray)^, Length(FArray), Encoding)
   else
     inherited Create(nil^, 0, Encoding);
 end;
@@ -2541,7 +2541,7 @@ begin
   SetLength(FParserMemory, SizeOfTYamlParser);
   FParser := PYamlParser(Pointer(@(FParserMemory[0])));
   FParserError := PYamlParserError(Pointer(@(FParserMemory[0])));
-  if _yaml_parser_initialize(FParser) <> 0 then
+  if _yaml_parser_initialize(FParser) = 0 then
     raise EYamlMemoryError.Create('YamlParser.Create: out of memory');
   _yaml_parser_set_encoding(FParser, FInput.Encoding);
   if Supports(FInput, IID_IYamlInputMemory) then
