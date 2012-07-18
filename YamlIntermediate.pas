@@ -4,7 +4,7 @@
  *)
 
 
-unit YAML;
+unit YamlIntermediate;
 
 interface
 
@@ -1066,6 +1066,238 @@ type
   public
     class function Create(const Input: IYamlInput): IYamlDocumentParser;
   end;
+
+  (** @} *)
+
+  (**
+   * @defgroup emitter Emitter Definitions
+   * @{
+   *)
+
+  (**
+   * The prototype of a write handler.
+   *
+   * The write handler is called when the emitter needs to flush the accumulated
+   * characters to the output.  The handler should write @a size bytes of the
+   * @a buffer to the output.
+   *
+   * @param[in,out]   data        A pointer to an application data specified by
+   *                              yaml_emitter_set_output().
+   * @param[in]       buffer      The buffer with bytes to be written.
+   * @param[in]       size        The size of the buffer.
+   *
+   * @returns On success, the handler should return @c 1.  If the handler failed,
+   * the returned value should be @c 0.
+   *)
+
+  IYamlOutput = interface
+  ['{C92FFC27-2B7C-4D4C-8772-22D92E636AF9}']
+    procedure Write(const Buffer; Size: Integer);
+  end;
+
+  (** The emitter states. *)
+  // yaml_emitter_state_t
+
+  (**
+   * The emitter structure.
+   *
+   * All members are internal.  Manage the structure using the @c yaml_emitter_
+   * family of functions.
+   *)
+
+  // yaml_emitter_t
+
+  (**
+   * Initialize an emitter.
+   *
+   * This function creates a new emitter object.  An application is responsible
+   * for destroying the object using the yaml_emitter_delete() function.
+   *
+   * @param[out]      emitter     An empty parser object.
+   *
+   * @returns @c 1 if the function succeeded, @c 0 on error.
+   *)
+
+  // yaml_emitter_initialize
+
+  (**
+   * Destroy an emitter.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   *)
+
+  // yaml_emitter_delete
+
+  (**
+   * Set a string output.
+   *
+   * The emitter will write the output characters to the @a output buffer of the
+   * size @a size.  The emitter will set @a size_written to the number of written
+   * bytes.  If the buffer is smaller than required, the emitter produces the
+   * YAML_WRITE_ERROR error.
+   *
+   * @param[in,out]   emitter         An emitter object.
+   * @param[in]       output          An output buffer.
+   * @param[in]       size            The buffer size.
+   * @param[in]       size_written    The pointer to save the number of written
+   *                                  bytes.
+   *)
+
+  procedure _yaml_emitter_set_output_string(emitter: PYamlEmitter;
+    output: PAnsiChar; size: Integer; var size_written: Integer); cdecl; external;
+
+  (**
+   * Set a file output.
+   *
+   * @a file should be a file object open for writing.  The application is
+   * responsible for closing the @a file.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       file        An open file.
+   *)
+
+  procedure _yaml_emitter_set_output_file(emitter: PYamlEmitter; file_: TStream); cdecl; external;
+
+  (**
+   * Set a generic output handler.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       handler     A write handler.
+   * @param[in]       data        Any application data for passing to the write
+   *                              handler.
+   *)
+
+  procedure _yaml_emitter_set_output(emitter: PYamlEmitter;
+    handler: TYamlWriteHandler; var data); cdecl; external;
+
+  (**
+   * Set the output encoding.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       encoding    The output encoding.
+   *)
+
+  procedure _yaml_emitter_set_encoding(emitter: PYamlEmitter;
+    encoding: TYamlEncoding); cdecl; external;
+
+  (**
+   * Set if the output should be in the "canonical" format as in the YAML
+   * specification.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       canonical   If the output is canonical.
+   *)
+
+  procedure _yaml_emitter_set_canonical(emitter: PYamlEmitter;
+    canonical: Integer); cdecl; external;
+
+  (**
+   * Set the intendation increment.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       indent      The indentation increment (1 < . < 10).
+   *)
+
+  procedure _yaml_emitter_set_indent(emitter: PYamlEmitter;
+    indent: Integer); cdecl; external;
+
+  (**
+   * Set the preferred line width. @c -1 means unlimited.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       width       The preferred line width.
+   *)
+
+  procedure _yaml_emitter_set_width(emitter: PYamlEmitter;
+    width: Integer); cdecl; external;
+
+  (**
+   * Set if unescaped non-ASCII characters are allowed.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       unicode     If unescaped Unicode characters are allowed.
+   *)
+
+  procedure _yaml_emitter_set_unicode(emitter: PYamlEmitter;
+    unicode: Integer); cdecl; external;
+
+  (**
+   * Set the preferred line break.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in]       line_break  The preferred line break.
+   *)
+
+  procedure _yaml_emitter_set_break(emitter: PYamlEmitter;
+    line_break: TYamlBreak); cdecl; external;
+
+  (**
+   * Emit an event.
+   *
+   * The event object may be generated using the yaml_parser_parse() function.
+   * The emitter takes the responsibility for the event object and destroys its
+   * content after it is emitted. The event object is destroyed even if the
+   * function fails.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in,out]   event       An event object.
+   *
+   * @returns @c 1 if the function succeeded, @c 0 on error.
+   *)
+
+  function _yaml_emitter_emit(emitter: PYamlEmitter; event: PYamlEvent): Integer;
+    cdecl; external;
+
+  (**
+   * Start a YAML stream.
+   *
+   * This function should be used before yaml_emitter_dump() is called.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   *
+   * @returns @c 1 if the function succeeded, @c 0 on error.
+   *)
+
+  function _yaml_emitter_open(emitter: PYamlEmitter): Integer; cdecl; external;
+
+  (**
+   * Finish a YAML stream.
+   *
+   * This function should be used after yaml_emitter_dump() is called.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   *
+   * @returns @c 1 if the function succeeded, @c 0 on error.
+   *)
+
+  function _yaml_emitter_close(emitter: PYamlEmitter): Integer; cdecl; external;
+
+  (**
+   * Emit a YAML document.
+   *
+   * The documen object may be generated using the yaml_parser_load() function
+   * or the yaml_document_initialize() function.  The emitter takes the
+   * responsibility for the document object and destoys its content after
+   * it is emitted. The document object is destroyedeven if the function fails.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   * @param[in,out]   document    A document object.
+   *
+   * @returns @c 1 if the function succeeded, @c 0 on error.
+   *)
+
+  function _yaml_emitter_dump(emitter: PYamlEmitter; document: PYamlDocument):
+    Integer; cdecl; external;
+
+  (**
+   * Flush the accumulated characters to the output.
+   *
+   * @param[in,out]   emitter     An emitter object.
+   *
+   * @returns @c 1 if the function succeeded, @c 0 on error.
+   *)
+
+  function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
   (** @} *)
 

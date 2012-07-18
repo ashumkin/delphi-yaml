@@ -1,10 +1,10 @@
-program yamltest;
+program YamlTest;
 
 {$APPTYPE CONSOLE}
 
 uses
-  Yaml in 'yaml.pas',
-  YamlThin in 'yamlthin.pas',
+  YamlIntermediate in 'YamlIntermediate.pas',
+  YamlThin in 'YamlThin.pas',
   SysUtils;
 
 var

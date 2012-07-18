@@ -13,3 +13,4 @@ Makefile
 *.cfg
 *.exe
 *.dsk
+*.dsm

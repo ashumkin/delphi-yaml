@@ -1301,7 +1301,25 @@ type TYamlEmitterState = (
  *)
 
 type
+  TYamlEmitterError = record
+
+    (**
+     * @name Error handling
+     * @{
+     *)
+
+    (** Error type. *)
+    error: TYamlErrorType;
+    (** Error description. *)
+    problem: PYamlChar;
+
+    (**
+     * @}
+     *)
+
+  end;
   PYamlEmitter = type Pointer;
+  PYamlEmitterError = ^TYamlEmitterError;
 var
   SizeOfTYamlEmitter: Integer; // initialized at runtime
 
