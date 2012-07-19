@@ -1143,8 +1143,20 @@ type
    *                                  bytes.
    *)
 
-  procedure _yaml_emitter_set_output_string(emitter: PYamlEmitter;
-    output: PAnsiChar; size: Integer; var size_written: Integer); cdecl; external;
+  IYamlOutputBuffer = interface(IYamlOutput)
+  ['{AFA9CE76-A93D-4F4A-BAE5-91263B7A091D}']
+    function GetSize: Integer;
+    function GetSizeWritten: Integer;
+    function GetValue: YamlString;
+    property Size: Integer read GetSize;
+    property SizeWritten: Integer read GetSizeWritten;
+    property Value: YamlString read GetValue;
+  end;
+  YamlOutput = class
+  public
+    class function Create(Output: Pointer; Size: Integer;
+      SizeWritten: PInteger; Encoding: TYamlEncoding): IYamlOutput;
+    class function Create(SizeInWideChars: Integer): IYamlOutputBuffer;
 
   (**
    * Set a file output.
@@ -1156,7 +1168,8 @@ type
    * @param[in]       file        An open file.
    *)
 
-  procedure _yaml_emitter_set_output_file(emitter: PYamlEmitter; file_: TStream); cdecl; external;
+    class function Create(Output: TStream; Encoding: TYamlEncoding): IYamlOutput;
+  end;
 
   (**
    * Set a generic output handler.
@@ -1167,8 +1180,7 @@ type
    *                              handler.
    *)
 
-  procedure _yaml_emitter_set_output(emitter: PYamlEmitter;
-    handler: TYamlWriteHandler; var data); cdecl; external;
+  // yaml_emitter_set_output
 
   (**
    * Set the output encoding.
@@ -1177,8 +1189,7 @@ type
    * @param[in]       encoding    The output encoding.
    *)
 
-  procedure _yaml_emitter_set_encoding(emitter: PYamlEmitter;
-    encoding: TYamlEncoding); cdecl; external;
+  // _yaml_emitter_set_encoding
 
   (**
    * Set if the output should be in the "canonical" format as in the YAML
@@ -1188,8 +1199,9 @@ type
    * @param[in]       canonical   If the output is canonical.
    *)
 
-  procedure _yaml_emitter_set_canonical(emitter: PYamlEmitter;
-    canonical: Integer); cdecl; external;
+  IYamlEmitterSettings = interface
+  ['{DE9B01DC-5FED-41EE-89DC-ADAC0F5207A6}']
+    function SetCanonical(Canonical: Boolean): IYamlEmitterSettings;
 
   (**
    * Set the intendation increment.
@@ -1198,8 +1210,7 @@ type
    * @param[in]       indent      The indentation increment (1 < . < 10).
    *)
 
-  procedure _yaml_emitter_set_indent(emitter: PYamlEmitter;
-    indent: Integer); cdecl; external;
+    function SetIndent(Indent: Integer): IYamlEmitterSettings;
 
   (**
    * Set the preferred line width. @c -1 means unlimited.
@@ -1208,8 +1219,7 @@ type
    * @param[in]       width       The preferred line width.
    *)
 
-  procedure _yaml_emitter_set_width(emitter: PYamlEmitter;
-    width: Integer); cdecl; external;
+    function SetWidth(Width: Integer): IYamlEmitterSettings;
 
   (**
    * Set if unescaped non-ASCII characters are allowed.
@@ -1218,8 +1228,7 @@ type
    * @param[in]       unicode     If unescaped Unicode characters are allowed.
    *)
 
-  procedure _yaml_emitter_set_unicode(emitter: PYamlEmitter;
-    unicode: Integer); cdecl; external;
+    function SetUnicode(Unicode: Boolean): IYamlEmitterSettings;
 
   (**
    * Set the preferred line break.
@@ -1228,8 +1237,8 @@ type
    * @param[in]       line_break  The preferred line break.
    *)
 
-  procedure _yaml_emitter_set_break(emitter: PYamlEmitter;
-    line_break: TYamlBreak); cdecl; external;
+    function SetLineBreak(LineBreak: TYamlBreak): IYamlEmitterSettings;
+  end;
 
   (**
    * Emit an event.
@@ -1245,8 +1254,17 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  function _yaml_emitter_emit(emitter: PYamlEmitter; event: PYamlEvent): Integer;
-    cdecl; external;
+  IYamlEventEmitter = interface
+  ['{5EB9D30F-C05B-4834-9565-7527B24E655D}']
+    procedure Emit(var Event: IYamlEvent);
+    procedure Flush;
+  end;
+  YamlEventEmitter = class
+  public
+    class function Create(const Output: IYamlOutput;
+      const Settings: IYamlEmitterSettings = nil): IYamlEventEmitter;
+    class function Settings: IYamlEmitterSettings;
+  end;
 
   (**
    * Start a YAML stream.
@@ -1258,7 +1276,9 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  function _yaml_emitter_open(emitter: PYamlEmitter): Integer; cdecl; external;
+  IYamlDocumentEmitter = interface
+  ['{67096033-CD73-4971-AA53-B418A7AE4FFF}']
+    procedure Open;
 
   (**
    * Finish a YAML stream.
@@ -1270,7 +1290,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  function _yaml_emitter_close(emitter: PYamlEmitter): Integer; cdecl; external;
+    procedure Close;
 
   (**
    * Emit a YAML document.
@@ -1286,8 +1306,7 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  function _yaml_emitter_dump(emitter: PYamlEmitter; document: PYamlDocument):
-    Integer; cdecl; external;
+    procedure Dump(var Document: IYamlDocument);
 
   (**
    * Flush the accumulated characters to the output.
@@ -1297,12 +1316,16 @@ type
    * @returns @c 1 if the function succeeded, @c 0 on error.
    *)
 
-  function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
+    procedure Flush;
+  end;
+  YamlDocumentEmitter = class
+  public
+    class function Create(const Output: IYamlOutput;
+      const Settings: IYamlEmitterSettings = nil): IYamlDocumentEmitter;
+    class function Settings: IYamlEmitterSettings;
+  end;
 
   (** @} *)
-
-
-
 
 implementation
 
@@ -2580,12 +2603,12 @@ end;
 
 function TYamlInputMemory.GetMem: Pointer;
 begin
-  Result := FMem;
+  Result := PAnsiChar(FMem) + FOffset;
 end;
 
 function TYamlInputMemory.GetSize: Integer;
 begin
-  Result := FSize;
+  Result := FSize - FOffset;
 end;
 
 constructor TYamlInputUTF8String.Create(const S: UTF8String; Encoding: TYamlEncoding);
