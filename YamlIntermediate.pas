@@ -2757,7 +2757,6 @@ type
 
 procedure TYamlParserImpl.RaiseYamlException;
 begin
-  // TODO: raise yaml parser exceptions
   case FParserError.error of
   yamlMemoryError:
     raise EYamlMemoryError.Create('YamlParser: out of memory');
@@ -3034,6 +3033,8 @@ end;
 
 constructor TYamlOutputStream.Create(Output: TStream; Encoding: TYamlEncoding);
 begin
+  if not Assigned(Output) then
+    raise ERangeError.Create('YamlOutput.Create: Output = nil');
   inherited Create(Encoding);
   FStream := Output;
 end;
@@ -3164,6 +3165,52 @@ type
     procedure Close;
     procedure Dump(var Document: IYamlDocument);
   end;
+
+
+procedure TYamlEmitterImpl.RaiseYamlException;
+begin
+  // TODO: yaml emitter exceptions
+end;
+
+constructor TYamlEmitterImpl.Create(const Output: IYamlOutput; const Settings: IYamlEmitterSettings);
+var
+  OutputAsIYamlOutputBuffer: IYamlOutputBuffer;
+  OutputAsIYamlOutputStream: IYamlOutputStream;
+begin
+  if not Assigned(Input) then
+    raise ERangeError.Create('YamlEmitter.Create: Output = nil');
+  inherited Create;
+  FOutput := Output;
+  SetLength(FEmitterMemory, SizeOfTYamlEmitter);
+  FEmitter := PYamlEmitter(Pointer(@(FEmitterMemory[0])));
+  FEmitterError := PYamlEmitterError(Pointer(@(FEmitterMemory[0])));
+  if _yaml_emitter_initialize(FEmitter) = 0 then
+    raise EYamlMemoryError.Create('YamlEmitter.Create: out of memory');
+  _yaml_emitter_set_encoding(FEmitter, FOutput.Encoding);
+  if Supports(FOutput, IID_IYamlOutputBuffer) then
+  begin
+    OutputAsIYamlOutputBuffer := FOutput as IYamlOutputBuffer;
+    _yaml_emitter_set_output_string(FEmitter,
+      PAnsiChar(OutputAsIYamlOutputBuffer.Mem), InputAsIYamlInputMemory.Size);
+  end else if Supports(FInput, IID_IYamlInputStream) then
+  begin
+    InputAsIYamlInputStream := FInput as IYamlInputStream;
+    _yaml_parser_set_input_file(FParser, InputAsIYamlInputStream.Stream);
+  end else
+  begin
+    _yaml_parser_set_input(FParser, YamlInputAdapter, FInput);
+  end;
+end;
+
+destructor TYamlEmitterImpl.Destroy;
+begin
+
+end;
+
+procedure TYamlEmitterImpl.Flush;
+begin
+
+end;
 
 class function YamlEventEmitter.Create(const Output: IYamlOutput;
   const Settings: IYamlEmitterSettings = nil): IYamlEventEmitter;
