@@ -1605,7 +1605,12 @@ end;
 
 function _fwrite(ptr: Pointer; size, nelem: Integer; stream: Pointer): Integer; cdecl;
 begin
-  Result := TStream(stream).Write(ptr^, size * nelem) div size;
+  try
+    TStream(stream).WriteBuffer(ptr^, size * nelem);
+    Result := size;
+  except
+    Result := 0;
+  end;
 end;
 
 procedure __assert(const __cond, __file: PAnsiChar; __line: Integer);

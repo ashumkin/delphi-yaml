@@ -1093,6 +1093,8 @@ type
   IYamlOutput = interface
   ['{C92FFC27-2B7C-4D4C-8772-22D92E636AF9}']
     procedure Write(const Buffer; Size: Integer);
+    function GetEncoding: TYamlEncoding;
+    property Encoding: TYamlEncoding read GetEncoding;
   end;
 
   (** The emitter states. *)
@@ -1146,17 +1148,16 @@ type
   IYamlOutputBuffer = interface(IYamlOutput)
   ['{AFA9CE76-A93D-4F4A-BAE5-91263B7A091D}']
     function GetSize: Integer;
-    function GetSizeWritten: Integer;
+    function GetSizeWritten: PInteger;
     function GetValue: YamlString;
     property Size: Integer read GetSize;
-    property SizeWritten: Integer read GetSizeWritten;
+    property SizeWritten: PInteger read GetSizeWritten;
     property Value: YamlString read GetValue;
   end;
   YamlOutput = class
   public
-    class function Create(Output: Pointer; Size: Integer;
-      SizeWritten: PInteger; Encoding: TYamlEncoding): IYamlOutput;
-    class function Create(SizeInWideChars: Integer): IYamlOutputBuffer;
+    class function Create(Output: Pointer; Size: Integer; Encoding: TYamlEncoding): IYamlOutput; overload;
+    class function Create(SizeInWideChars: Integer): IYamlOutputBuffer; overload;
 
   (**
    * Set a file output.
@@ -1168,7 +1169,7 @@ type
    * @param[in]       file        An open file.
    *)
 
-    class function Create(Output: TStream; Encoding: TYamlEncoding): IYamlOutput;
+    class function Create(Output: TStream; Encoding: TYamlEncoding): IYamlOutput; overload;
   end;
 
   (**
@@ -1238,6 +1239,16 @@ type
    *)
 
     function SetLineBreak(LineBreak: TYamlBreak): IYamlEmitterSettings;
+    function GetCanonical: Boolean;
+    function GetIndent: Integer;
+    function GetWidth: Integer;
+    function GetUnicode: Boolean;
+    function GetLineBreak: TYamlBreak;
+    property Canonical: Boolean read GetCanonical;
+    property Indent: Integer read GetIndent;
+    property Width: Integer read GetWidth;
+    property Unicode: Boolean read GetUnicode;
+    property LineBreak: TYamlBreak read GetLineBreak;
   end;
 
   (**
@@ -2881,6 +2892,299 @@ end;
 class function YamlDocumentParser.Create(const Input: IYamlInput): IYamlDocumentParser;
 begin
   Result := TYamlDocumentParserImpl.Create(Input);
+end;
+
+type
+  TYamlOutputImpl = class(TInterfacedObject, IYamlOutput)
+  protected
+    FEncoding: TYamlEncoding;
+    constructor Create(Encoding: TYamlEncoding);
+  public
+    procedure Write(const Buffer; Size: Integer); virtual; abstract;
+    function GetEncoding: TYamlEncoding;
+    property Encoding: TYamlEncoding read GetEncoding;
+  end;
+
+  TYamlOutputMemory = class(TYamlOutputImpl, IYamlOutputBuffer)
+  protected
+    FMem: Pointer;
+    FSize: Integer;
+    FOffset: Integer;
+  public
+    constructor Create(Output: Pointer; Size: Integer;
+      Encoding: TYamlEncoding);
+    procedure Write(const Buffer; Size: Integer); override;
+    function GetSize: Integer;
+    function GetSizeWritten: PInteger;
+    function GetValue: YamlString; virtual;
+    property Size: Integer read GetSize;
+    property SizeWritten: PInteger read GetSizeWritten;
+    property Value: YamlString read GetValue;
+  end;
+
+  IYamlOutputStream = interface
+  ['{9747F743-2CC7-4B1E-96D0-1C726B1F38FD}']
+    function GetStream: TStream;
+    property Stream: TStream read GetStream;
+  end;
+
+  TYamlOutputBuffer = class(TYamlOutputMemory)
+  protected
+    FBuffer: YamlString;
+  public
+    constructor Create(SizeInWideChars: Integer);
+    function GetValue: YamlString; override;
+  end;
+
+  TYamlOutputStream = class(TYamlOutputImpl, IYamlOutputStream)
+  protected
+    FStream: TStream;
+  public
+    constructor Create(Output: TStream; Encoding: TYamlEncoding);
+    procedure Write(const Buffer; Size: Integer); override;
+    function GetStream: TStream;
+    property Stream: TStream read GetStream;
+  end;
+const
+  IID_IYamlOutputBuffer : TGUID = '{AFA9CE76-A93D-4F4A-BAE5-91263B7A091D}';
+  IID_IYamlOutputStream : TGUID = '{9747F743-2CC7-4B1E-96D0-1C726B1F38FD}';
+
+constructor TYamlOutputImpl.Create(Encoding: TYamlEncoding);
+begin
+  inherited Create;
+  FEncoding := Encoding;
+end;
+
+function TYamlOutputImpl.GetEncoding: TYamlEncoding;
+begin
+  Result := FEncoding;
+end;
+
+constructor TYamlOutputMemory.Create(Output: Pointer; Size: Integer;
+  Encoding: TYamlEncoding);
+begin
+  if not Assigned(Output) then
+    raise ERangeError.Create('YamlOutput.Create: Output = nil');
+  inherited Create(Encoding);
+  FMem := Output;
+  FSize := Size;
+  FOffset := 0;
+end;
+
+procedure TYamlOutputMemory.Write(const Buffer; Size: Integer);
+var
+  DoRaise: Boolean;
+begin
+  DoRaise := FOffset + Size > FSize;
+  if DoRaise then
+    Size := FSize - FOffset;
+
+  Move(Buffer, (PAnsiChar(FMem) + FOffset)^, Size);
+  Inc(FOffset, Size);
+  // yaml_string_write_handler does write even when overflow
+  // is known to happen
+
+  if DoRaise then
+    raise EYamlWriterError.Create('Write error, buffer overflow');
+      // the exception message is discarded
+end;
+
+function TYamlOutputMemory.GetSize: Integer;
+begin
+  Result := FSize;
+end;
+
+function TYamlOutputMemory.GetSizeWritten: PInteger;
+begin
+  Result := @FOffset;
+end;
+
+function TYamlOutputMemory.GetValue: YamlString;
+var
+  IntValue: UTF8String;
+begin
+  if FEncoding = yamlUtf8Encoding then
+  begin
+    SetString(IntValue, PAnsiChar(FMem), FOffset);
+    Result := UTF8Decode(IntValue);
+  end else
+    raise EYamlError.Create('YamlOutput.Value: only UTF-8 is supported');
+end;
+
+class function YamlOutput.Create(Output: Pointer; Size: Integer; Encoding: TYamlEncoding): IYamlOutput;
+begin
+  Result := TYamlOutputMemory.Create(Output, Size, Encoding);
+end;
+
+constructor TYamlOutputBuffer.Create(SizeInWideChars: Integer);
+begin
+  SetLength(FBuffer, SizeInWideChars);
+  inherited Create(Pointer(FBuffer), SizeInWideChars * 2, yamlUtf16leEncoding);
+end;
+
+function TYamlOutputBuffer.GetValue: YamlString;
+begin
+  Result := Copy(FBuffer, 1, FOffset div 2);
+end;
+
+class function YamlOutput.Create(SizeInWideChars: Integer): IYamlOutputBuffer;
+begin
+  Result := TYamlOutputBuffer.Create(SizeInWideChars);
+end;
+
+constructor TYamlOutputStream.Create(Output: TStream; Encoding: TYamlEncoding);
+begin
+  inherited Create(Encoding);
+  FStream := Output;
+end;
+
+procedure TYamlOutputStream.Write(const Buffer; Size: Integer);
+begin
+  FStream.WriteBuffer(Buffer, Size);
+end;
+
+function TYamlOutputStream.GetStream: TStream;
+begin
+  Result := FStream;
+end;
+
+class function YamlOutput.Create(Output: TStream; Encoding: TYamlEncoding): IYamlOutput;
+begin
+  Result := TYamlOutputStream.Create(Output, Encoding);
+end;
+
+type
+  TYamlEmitterSettingsImpl = class(TInterfacedObject, IYamlEmitterSettings)
+  protected
+    FCanonical: Boolean;
+    FIndent: Integer;
+    FWidth: Integer;
+    FUnicode: Boolean;
+    FLineBreak: TYamlBreak;
+  public
+    constructor Create(Canonical: Boolean = False; Indent: Integer = 0;
+      Width: Integer = 2; Unicode: Boolean = True; LineBreak: TYamlBreak = yamlCrLnBreak);
+    function SetCanonical(Canonical: Boolean): IYamlEmitterSettings;
+    function SetIndent(Indent: Integer): IYamlEmitterSettings;
+    function SetWidth(Width: Integer): IYamlEmitterSettings;
+    function SetUnicode(Unicode: Boolean): IYamlEmitterSettings;
+    function SetLineBreak(LineBreak: TYamlBreak): IYamlEmitterSettings;
+    function GetCanonical: Boolean;
+    function GetIndent: Integer;
+    function GetWidth: Integer;
+    function GetUnicode: Boolean;
+    function GetLineBreak: TYamlBreak;
+    property Canonical: Boolean read GetCanonical;
+    property Indent: Integer read GetIndent;
+    property Width: Integer read GetWidth;
+    property Unicode: Boolean read GetUnicode;
+    property LineBreak: TYamlBreak read GetLineBreak;
+  end;
+
+constructor TYamlEmitterSettingsImpl.Create(Canonical: Boolean = False; Indent: Integer = 0;
+  Width: Integer = 2; Unicode: Boolean = True; LineBreak: TYamlBreak = yamlCrLnBreak);
+begin
+  inherited Create;
+  FCanonical := Canonical; FIndent := Indent; FWidth := Width;
+  FUnicode := Unicode; FLineBreak := LineBreak;
+end;
+
+function TYamlEmitterSettingsImpl.SetCanonical(Canonical: Boolean): IYamlEmitterSettings;
+begin
+  Result := TYamlEmitterSettingsImpl.Create(Canonical, FIndent, FWidth, FUnicode, FLineBreak);
+end;
+
+function TYamlEmitterSettingsImpl.SetIndent(Indent: Integer): IYamlEmitterSettings;
+begin
+  Result := TYamlEmitterSettingsImpl.Create(FCanonical, Indent, FWidth, FUnicode, FLineBreak);
+end;
+
+function TYamlEmitterSettingsImpl.SetWidth(Width: Integer): IYamlEmitterSettings;
+begin
+  Result := TYamlEmitterSettingsImpl.Create(FCanonical, FIndent, Width, FUnicode, FLineBreak);
+end;
+
+function TYamlEmitterSettingsImpl.SetUnicode(Unicode: Boolean): IYamlEmitterSettings;
+begin
+  Result := TYamlEmitterSettingsImpl.Create(FCanonical, FIndent, FWidth, Unicode, FLineBreak);
+end;
+
+function TYamlEmitterSettingsImpl.SetLineBreak(LineBreak: TYamlBreak): IYamlEmitterSettings;
+begin
+  Result := TYamlEmitterSettingsImpl.Create(FCanonical, FIndent, FWidth, FUnicode, LineBreak);
+end;
+
+function TYamlEmitterSettingsImpl.GetCanonical: Boolean;
+begin
+  Result := FCanonical;
+end;
+
+function TYamlEmitterSettingsImpl.GetIndent: Integer;
+begin
+  Result := FIndent;
+end;
+
+function TYamlEmitterSettingsImpl.GetWidth: Integer;
+begin
+  Result := FWidth;
+end;
+
+function TYamlEmitterSettingsImpl.GetUnicode: Boolean;
+begin
+  Result := FUnicode;
+end;
+
+function TYamlEmitterSettingsImpl.GetLineBreak: TYamlBreak;
+begin
+  Result := FLineBreak;
+end;
+
+type
+  TYamlEmitterImpl = class(TInterfacedObject)
+  protected
+    FOutput: IYamlOutput;
+    FEmitter: PYamlEmitter;
+    FEmitterError: PYamlEmitterError;
+    FEmitterMemory: TByteDynArray;
+    procedure RaiseYamlException;
+  public
+    constructor Create(const Output: IYamlOutput; const Settings: IYamlEmitterSettings);
+    destructor Destroy; override;
+    procedure Flush;
+  end;
+
+  TYamlEventEmitter = class(TYamlEmitterImpl, IYamlEventEmitter)
+  public
+    procedure Emit(var Event: IYamlEvent);
+  end;
+
+  TYamlDocumentEmitter = class(TYamlEmitterImpl, IYamlDocumentEmitter)
+  public
+    procedure Open;
+    procedure Close;
+    procedure Dump(var Document: IYamlDocument);
+  end;
+
+class function YamlEventEmitter.Create(const Output: IYamlOutput;
+  const Settings: IYamlEmitterSettings = nil): IYamlEventEmitter;
+begin
+
+end;
+
+class function YamlEventEmitter.Settings: IYamlEmitterSettings;
+begin
+
+end;
+
+class function YamlDocumentEmitter.Create(const Output: IYamlOutput;
+  const Settings: IYamlEmitterSettings = nil): IYamlDocumentEmitter;
+begin
+
+end;
+
+class function YamlDocumentEmitter.Settings: IYamlEmitterSettings;
+begin
+
 end;
 
 end.
