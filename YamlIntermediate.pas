@@ -1708,7 +1708,13 @@ begin
 end;
 
 type
-  TYamlEventImpl = class(TInterfacedObject, IYamlEvent)
+  IYamlEventImpl = interface
+  ['{456ADABA-5C5B-4F69-B8F4-3882DDA8D81A}']
+    function GetYamlEvent: PYamlEvent;
+    property YamlEvent: PYamlEvent read GetYamlEvent;
+  end;
+
+  TYamlEventImpl = class(TInterfacedObject, IYamlEvent, IYamlEventImpl)
   private
     FEvent: TYamlEvent;
   public
@@ -1737,6 +1743,7 @@ type
     function GetMappingStartStyle: TYamlMappingStyle;
     function GetStartMark: IYamlMark;
     function GetEndMark: IYamlMark;
+    function GetYamlEvent: PYamlEvent;
 
     property Type_: TYamlEventType read GetType_;
     property StreamStartEncoding: TYamlEncoding read GetStreamStartEncoding;
@@ -1761,7 +1768,10 @@ type
     property MappingStartStyle: TYamlMappingStyle read GetMappingStartStyle;
     property StartMark: IYamlMark read GetStartMark;
     property EndMark: IYamlMark read GetEndMark;
+    property YamlEvent: PYamlEvent read GetYamlEvent;
   end;
+const
+  IID_IYamlEventImpl : TGUID = '{456ADABA-5C5B-4F69-B8F4-3882DDA8D81A}';
 
 constructor TYamlEventImpl.Create(out Event: PYamlEvent);
 begin
@@ -1941,6 +1951,11 @@ end;
 function TYamlEventImpl.GetEndMark: IYamlMark;
 begin
   Result := TYamlMarkImpl.Create(@(FEvent.end_mark));
+end;
+
+function TYamlEventImpl.GetYamlEvent: PYamlEvent;
+begin
+  Result := @FEvent;
 end;
 
 class function YamlEventStreamStart.Create(Encoding: TYamlEncoding): IYamlEvent;
@@ -2137,7 +2152,13 @@ type
     property EndMark: IYamlMark read GetEndMark;
   end;
 
-  TYamlDocumentImpl = class(TInterfacedObject, IYamlDocument)
+  IYamlDocumentImpl = interface
+  ['{3133D4B9-3D37-4AC7-9060-E42C12980EAE}']
+    function GetYamlDocument: PYamlDocument;
+    property YamlDocument: PYamlDocument read GetYamlDocument;
+  end;
+
+  TYamlDocumentImpl = class(TInterfacedObject, IYamlDocument, IYamlDocumentImpl)
   private
     FDocument: TYamlDocument;
   public
@@ -2159,6 +2180,8 @@ type
     function CreateSequence(const Tag: YamlString; Style: TYamlScalarStyle): IYamlNode;
     function CreateMapping(const Tag: YamlString; Style: TYamlMappingStyle): IYamlNode;
 
+    function GetYamlDocument: PYamlDocument;
+
     property Nodes: TIYamlNodeDynArray read GetNodes;
     property RootNode: IYamlNode read GetRootNode;
     property VersionDirective: IYamlVersionDirective read GetVersionDirective;
@@ -2167,7 +2190,10 @@ type
     property EndImplicit: Boolean read GetEndImplicit;
     property StartMark: IYamlMark read GetStartMark;
     property EndMark: IYamlMark read GetEndMark;
+    property YamlDocument: PYamlDocument read GetYamlDocument;
   end;
+const
+  IID_IYamlDocumentImpl : TGUID = '{3133D4B9-3D37-4AC7-9060-E42C12980EAE}';
 
 constructor TYamlNodeImpl.Create(Document: PYamlDocument;
   DocumentInterface: IYamlDocument; Index: Integer);
@@ -2508,6 +2534,11 @@ begin
   Result := TYamlNodeImpl.Create(@FDocument, Self, NodeId - 1);
 end;
 
+function TYamlDocumentImpl.GetYamlDocument: PYamlDocument;
+begin
+  Result := @FDocument;
+end;
+
 type
   TYamlInputImpl = class(TInterfacedObject, IYamlInput)
   protected
@@ -2809,14 +2840,12 @@ begin
   if _yaml_parser_initialize(FParser) = 0 then
     raise EYamlMemoryError.Create('YamlParser.Create: out of memory');
   _yaml_parser_set_encoding(FParser, FInput.Encoding);
-  if Supports(FInput, IID_IYamlInputMemory) then
+  if Supports(FInput, IID_IYamlInputMemory, InputAsIYamlInputMemory) then
   begin
-    InputAsIYamlInputMemory := FInput as IYamlInputMemory;
     _yaml_parser_set_input_string(FParser,
       PAnsiChar(InputAsIYamlInputMemory.Mem), InputAsIYamlInputMemory.Size);
-  end else if Supports(FInput, IID_IYamlInputStream) then
+  end else if Supports(FInput, IID_IYamlInputStream, InputAsIYamlInputStream) then
   begin
-    InputAsIYamlInputStream := FInput as IYamlInputStream;
     _yaml_parser_set_input_file(FParser, InputAsIYamlInputStream.Stream);
   end else
   begin
@@ -3085,8 +3114,8 @@ type
     FUnicode: Boolean;
     FLineBreak: TYamlBreak;
   public
-    constructor Create(Canonical: Boolean = False; Indent: Integer = 0;
-      Width: Integer = 2; Unicode: Boolean = True; LineBreak: TYamlBreak = yamlCrLnBreak);
+    constructor Create(Canonical: Boolean = False; Indent: Integer = 2;
+      Width: Integer = 80; Unicode: Boolean = True; LineBreak: TYamlBreak = yamlCrLnBreak);
     function SetCanonical(Canonical: Boolean): IYamlEmitterSettings;
     function SetIndent(Indent: Integer): IYamlEmitterSettings;
     function SetWidth(Width: Integer): IYamlEmitterSettings;
@@ -3104,8 +3133,8 @@ type
     property LineBreak: TYamlBreak read GetLineBreak;
   end;
 
-constructor TYamlEmitterSettingsImpl.Create(Canonical: Boolean = False; Indent: Integer = 0;
-  Width: Integer = 2; Unicode: Boolean = True; LineBreak: TYamlBreak = yamlCrLnBreak);
+constructor TYamlEmitterSettingsImpl.Create(Canonical: Boolean = False; Indent: Integer = 2;
+  Width: Integer = 80; Unicode: Boolean = True; LineBreak: TYamlBreak = yamlCrLnBreak);
 begin
   inherited Create;
   FCanonical := Canonical; FIndent := Indent; FWidth := Width;
@@ -3119,11 +3148,17 @@ end;
 
 function TYamlEmitterSettingsImpl.SetIndent(Indent: Integer): IYamlEmitterSettings;
 begin
+  if not ((1 < Indent) and (Indent < 10)) then
+    Indent := 2; 
   Result := TYamlEmitterSettingsImpl.Create(FCanonical, Indent, FWidth, FUnicode, FLineBreak);
 end;
 
 function TYamlEmitterSettingsImpl.SetWidth(Width: Integer): IYamlEmitterSettings;
 begin
+  if Width < 0 then
+    Width := -1
+  else if Width <= FIndent * 2 then
+    Width := 80;
   Result := TYamlEmitterSettingsImpl.Create(FCanonical, FIndent, Width, FUnicode, FLineBreak);
 end;
 
@@ -3169,6 +3204,7 @@ type
     FEmitter: PYamlEmitter;
     FEmitterError: PYamlEmitterError;
     FEmitterMemory: TByteDynArray;
+    FFlushed: Boolean; 
     procedure RaiseYamlException;
   public
     constructor Create(const Output: IYamlOutput; const Settings: IYamlEmitterSettings);
@@ -3182,7 +3218,10 @@ type
   end;
 
   TYamlDocumentEmitter = class(TYamlEmitterImpl, IYamlDocumentEmitter)
+  protected
+    FOpened, FClosed: Boolean;
   public
+    destructor Destroy; override;
     procedure Open;
     procedure Close;
     procedure Dump(var Document: IYamlDocument);
@@ -3213,6 +3252,7 @@ begin
   if not Assigned(Output) then
     raise ERangeError.Create('YamlEmitter.Create: Output = nil');
   inherited Create;
+  FFlushed := True;
   FOutput := Output;
   SetLength(FEmitterMemory, SizeOfTYamlEmitter);
   FEmitter := PYamlEmitter(Pointer(@(FEmitterMemory[0])));
@@ -3220,23 +3260,42 @@ begin
   if _yaml_emitter_initialize(FEmitter) = 0 then
     raise EYamlMemoryError.Create('YamlEmitter.Create: out of memory');
   _yaml_emitter_set_encoding(FEmitter, FOutput.Encoding);
-  if Supports(FOutput, IID_IYamlOutputMemory) then
+  if Supports(FOutput, IID_IYamlOutputMemory, OutputAsIYamlOutputMemory) then
   begin
-    OutputAsIYamlOutputMemory := FOutput as IYamlOutputMemory;
     _yaml_emitter_set_output_string(FEmitter, OutputAsIYamlOutputMemory.Mem,
       OutputAsIYamlOutputMemory.Size, OutputAsIYamlOutputMemory.PSizeWritten^);
-  end else if Supports(FOutput, IID_IYamlInputStream) then
+  end else if Supports(FOutput, IID_IYamlInputStream, OutputAsIYamlOutputStream) then
   begin
-    OutputAsIYamlOutputStream := FOutput as IYamlOutputStream;
     _yaml_emitter_set_output_file(FEmitter, OutputAsIYamlOutputStream.Stream);
   end else
   begin
-    _yaml_emitter_set_output(FParser, YamlOutputAdapter, FOutput);
+    _yaml_emitter_set_output(FEmitter, YamlOutputAdapter, FOutput);
+  end;
+
+  if not Assigned(Settings) then
+  begin
+    _yaml_emitter_set_canonical(FEmitter, 0);
+    _yaml_emitter_set_indent(FEmitter, 2);
+    _yaml_emitter_set_width(FEmitter, 80);
+    _yaml_emitter_set_unicode(FEmitter, 1);
+    _yaml_emitter_set_break(FEmitter, yamlCrLnBreak);
+  end else begin
+    _yaml_emitter_set_canonical(FEmitter, Integer(Settings.Canonical));
+    _yaml_emitter_set_indent(FEmitter, Settings.Indent);
+    _yaml_emitter_set_width(FEmitter, Settings.Width);
+    _yaml_emitter_set_unicode(FEmitter, Integer(Settings.Unicode));
+    _yaml_emitter_set_break(FEmitter, Settings.LineBreak);
   end;
 end;
 
 destructor TYamlEmitterImpl.Destroy;
 begin
+  if not FFlushed then
+  try
+    Flush;
+  except
+    // this is a destructor, we can't do anything meaningful
+  end;
   _yaml_emitter_delete(FEmitter);
   inherited Destroy;
 end;
@@ -3245,28 +3304,119 @@ procedure TYamlEmitterImpl.Flush;
 begin
   if _yaml_emitter_flush(FEmitter) = 0 then
     RaiseYamlException;
+  FFlushed := True;
+end;
+
+procedure TYamlEventEmitter.Emit(var Event: IYamlEvent);
+var
+  EventPtr: PYamlEvent;
+  EventAsIYamlEventImpl: IYamlEventImpl;
+begin
+  if not Assigned(Event) then
+    raise ERangeError.Create('YamlEventEmitter.Emit: Event = nil');
+  FFlushed := False;
+  try
+    if not Supports(Event, IID_IYamlEventImpl, EventAsIYamlEventImpl) then
+      raise ERangeError.Create('YamlEventEmitter.Emit: Event is not created by YamlIntermediate');
+    EventPtr := EventAsIYamlEventImpl.YamlEvent;
+    if _yaml_emitter_emit(FEmitter, EventPtr) = 0 then
+      RaiseYamlException;
+  finally
+    Event := nil;
+    // The event object is destroyed even if the function fails.
+    // This is an excerpt from yaml.h
+    // libyaml single-reference API is not mapped
+    // flawlessly to reference-counted Delphi-YAML intermediate
+    // binding.
+    // A proper (correct) way to implement intermediate
+    // binding is to implement a clone and always emit
+    // an internally destroyed clone.
+    // This has serious performance drawbacks when it takes to
+    // cloning large documents.
+    // Instead we emulate libyaml API by requiring in-out
+    // argument that we destroy whatever happens.
+  end;
 end;
 
 class function YamlEventEmitter.Create(const Output: IYamlOutput;
   const Settings: IYamlEmitterSettings = nil): IYamlEventEmitter;
 begin
-
+  Result := TYamlEventEmitter.Create(Output, Settings);
 end;
 
 class function YamlEventEmitter.Settings: IYamlEmitterSettings;
 begin
+  Result := TYamlEmitterSettingsImpl.Create;
+end;
 
+destructor TYamlDocumentEmitter.Destroy;
+begin
+  if FOpened and not FClosed then
+  try
+    Close;
+  except
+    // this is a destructor, we can't do anything meaningful
+  end;
+  inherited Destroy;
+end;
+
+procedure TYamlDocumentEmitter.Open;
+begin
+  if FOpened then
+    raise ERangeError.Create('YamlDocumentEmitter.Open: emitter is already opened');
+  if FClosed then
+    raise ERangeError.Create('YamlDocumentEmitter.Open: emitter is already closed');
+  FFlushed := False;
+  if _yaml_emitter_open(FEmitter) = 0 then
+    RaiseYamlException;
+  FOpened := True;
+end;
+
+procedure TYamlDocumentEmitter.Close;
+begin
+  if not FOpened then
+    raise ERangeError.Create('YamlDocumentEmitter.Close: emitter isn''t opened yet');
+  if FClosed then
+    raise ERangeError.Create('YamlDocumentEmitter.Close: emitter is already closed');
+  FFlushed := False;
+  if _yaml_emitter_close(FEmitter) = 0 then
+    RaiseYamlException;
+  FOpened := False;
+  FClosed := True;
+end;
+
+procedure TYamlDocumentEmitter.Dump(var Document: IYamlDocument);
+var
+  DocumentPtr: PYamlDocument;
+  DocumentAsIYamlDocumentImpl: IYamlDocumentImpl;
+begin
+  if not Assigned(Document) then
+    raise ERangeError.Create('YamlDocumentEmitter.Dump: Document = nil');
+  FFlushed := False;
+  try
+    if FClosed then
+      raise ERangeError.Create('YamlDocumentEmitter.Dump: emitter is already closed');
+    if not FOpened then
+      Open;
+    if not Supports(Document, IID_IYamlDocumentImpl, DocumentAsIYamlDocumentImpl) then
+      raise ERangeError.Create('YamlDocumentEmitter.Dump: Document is not created by YamlIntermediate');
+    DocumentPtr := DocumentAsIYamlDocumentImpl.YamlDocument;
+    if _yaml_emitter_dump(FEmitter, DocumentPtr) = 0 then
+      RaiseYamlException;
+  finally
+    Document := nil; // see above TYamlEventEmitter.Emit
+  end;
 end;
 
 class function YamlDocumentEmitter.Create(const Output: IYamlOutput;
   const Settings: IYamlEmitterSettings = nil): IYamlDocumentEmitter;
 begin
-
+  Result := TYamlDocumentEmitter.Create(Output, Settings);
 end;
 
 class function YamlDocumentEmitter.Settings: IYamlEmitterSettings;
 begin
-
+  Result := TYamlEmitterSettingsImpl.Create;
 end;
 
 end.
