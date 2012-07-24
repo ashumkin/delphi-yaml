@@ -24,7 +24,7 @@ begin
     EventParser := YamlEventParser.Create(YamlInput.Create(TestString));
     while EventParser.Next(Event) do
     begin
-      case Event.Type_ of
+      case Event.EventType of
         yamlNoEvent: Write('NoEvent'#9);
         yamlStreamStartEvent: Write('StreamStart'#9);
         yamlStreamEndEvent: Write('StreamEnd'#9);

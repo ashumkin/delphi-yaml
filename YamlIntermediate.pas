@@ -218,7 +218,7 @@ type
   (** The token structure. *)
   IYamlToken = interface(IInterface)
   ['{AB5E049D-123D-45EB-BFB3-D7B5424AECB4}']
-    function GetType_: TYamlTokenType;
+    function GetTokenType: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
     function GetAliasValue: YamlString;
     function GetAnchorValue: YamlString;
@@ -232,7 +232,7 @@ type
     function GetEndMark: IYamlMark;
 
     (** The token type. *)
-    property Type_: TYamlTokenType read GetType_;
+    property TokenType: TYamlTokenType read GetTokenType;
 
     (** The token data. *)
 
@@ -296,7 +296,7 @@ type
   (** The event structure. *)
   IYamlEvent = interface(IInterface)
   ['{12F279D3-BADF-4F5E-8E4E-D895D0A20AF0}']
-    function GetType_: TYamlEventType;
+    function GetEventType: TYamlEventType;
     function GetStreamStartEncoding: TYamlEncoding;
     function GetDocumentStartVersionDirective: IYamlVersionDirective;
     function GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray;
@@ -321,7 +321,7 @@ type
     function GetEndMark: IYamlMark;
 
     (** The event type. *)
-    property Type_: TYamlEventType read GetType_;
+    property EventType: TYamlEventType read GetEventType;
 
     (** The event data. *)
 
@@ -638,7 +638,7 @@ type
   ['{4A158305-AC46-41AA-86E5-10AC082C14D9}']
     function GetDocument: IYamlDocument;
     function GetId: Integer; // ids start from 0 while in thin libyaml they start from 1
-    function GetType_: TYamlNodeType;
+    function GetNodeType: TYamlNodeType;
     function GetTag: YamlString;
     function GetScalarValue: YamlString;
     function GetScalarStyle: TYamlScalarStyle;
@@ -654,7 +654,7 @@ type
     property Id: Integer read GetId;
 
     (** The node type. *)
-    property Type_: TYamlNodeType read GetType_;
+    property NodeType: TYamlNodeType read GetNodeType;
 
     (** The node tag. *)
     property Tag: YamlString read GetTag;
@@ -1634,7 +1634,7 @@ type
   public
     constructor Create(out Token: PYamlToken);
     destructor Destroy; override;
-    function GetType_: TYamlTokenType;
+    function GetTokenType: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
     function GetAliasValue: YamlString;
     function GetAnchorValue: YamlString;
@@ -1647,7 +1647,7 @@ type
     function GetStartMark: IYamlMark;
     function GetEndMark: IYamlMark;
 
-    property Type_: TYamlTokenType read GetType_;
+    property TokenType: TYamlTokenType read GetTokenType;
     property StreamStartEncoding: TYamlEncoding read GetStreamStartEncoding;
     property AliasValue: YamlString read GetAliasValue;
     property AnchorValue: YamlString read GetAnchorValue;
@@ -1673,7 +1673,7 @@ begin
   inherited Destroy;
 end;
 
-function TYamlTokenImpl.GetType_: TYamlTokenType;
+function TYamlTokenImpl.GetTokenType: TYamlTokenType;
 begin
   Result := FToken.data.type_;
 end;
@@ -1681,35 +1681,35 @@ end;
 function TYamlTokenImpl.GetStreamStartEncoding: TYamlEncoding;
 begin
   if FToken.data.type_ <> yamlStreamStartToken then
-    raise ERangeError.Create('YamlToken.StreamStartEncoding: Type_ <> yamlStreamStartToken');
+    raise ERangeError.Create('YamlToken.StreamStartEncoding: TokenType <> yamlStreamStartToken');
   Result := FToken.data.stream_start_encoding;
 end;
 
 function TYamlTokenImpl.GetAliasValue: YamlString;
 begin
   if FToken.data.type_ <> yamlAliasToken then
-    raise ERangeError.Create('YamlToken.AliasValue: Type_ <> yamlAliasToken');
+    raise ERangeError.Create('YamlToken.AliasValue: TokenType <> yamlAliasToken');
   Result := UTF8Decode(FToken.data.alias_value);
 end;
 
 function TYamlTokenImpl.GetAnchorValue: YamlString;
 begin
   if FToken.data.type_ <> yamlAnchorToken then
-    raise ERangeError.Create('YamlToken.AnchorValue: Type_ <> yamlAnchorToken');
+    raise ERangeError.Create('YamlToken.AnchorValue: TokenType <> yamlAnchorToken');
   Result := UTF8Decode(FToken.data.anchor_value);
 end;
 
 function TYamlTokenImpl.GetTagHandle: YamlString;
 begin
   if FToken.data.type_ <> yamlTagToken then
-    raise ERangeError.Create('YamlToken.TagHandle: Type_ <> yamlTagToken');
+    raise ERangeError.Create('YamlToken.TagHandle: TokenType <> yamlTagToken');
   Result := UTF8Decode(FToken.data.tag_handle);
 end;
 
 function TYamlTokenImpl.GetTagSuffix: YamlString;
 begin
   if FToken.data.type_ <> yamlTagToken then
-    raise ERangeError.Create('YamlToken.TagSuffix: Type_ <> yamlTagToken');
+    raise ERangeError.Create('YamlToken.TagSuffix: TokenType <> yamlTagToken');
   Result := UTF8Decode(FToken.data.tag_suffix);
 end;
 
@@ -1718,7 +1718,7 @@ var
   Temp: UTF8String;
 begin
   if FToken.data.type_ <> yamlScalarToken then
-    raise ERangeError.Create('YamlToken.ScalarValue: Type_ <> yamlScalarToken');
+    raise ERangeError.Create('YamlToken.ScalarValue: TokenType <> yamlScalarToken');
   if Assigned(FToken.data.scalar_value) then
     SetString(Temp, FToken.data.scalar_value, FToken.data.scalar_length);
   Result := UTF8Decode(Temp);
@@ -1727,14 +1727,14 @@ end;
 function TYamlTokenImpl.GetScalarStyle: TYamlScalarStyle;
 begin
   if FToken.data.type_ <> yamlScalarToken then
-    raise ERangeError.Create('YamlToken.ScalarStyle: Type_ <> yamlScalarToken');
+    raise ERangeError.Create('YamlToken.ScalarStyle: TokenType <> yamlScalarToken');
   Result := FToken.data.scalar_style;
 end;
 
 function TYamlTokenImpl.GetVersionDirective: IYamlVersionDirective;
 begin
   if FToken.data.type_ <> yamlVersionDirectiveToken then
-    raise ERangeError.Create('YamlToken.VersionDirective: Type_ <> yamlVersionDirectiveToken');
+    raise ERangeError.Create('YamlToken.VersionDirective: TokenType <> yamlVersionDirectiveToken');
   Result := YamlVersionDirective.Create(FToken.data.version_directive_major, FToken.data.version_directive_minor);
 end;
 
@@ -1743,7 +1743,7 @@ var
   Temp: TYamlTagDirective;
 begin
   if FToken.data.type_ <> yamlTagDirectiveToken then
-    raise ERangeError.Create('YamlToken.TagDirective: Type_ <> yamlTagDirectiveToken');
+    raise ERangeError.Create('YamlToken.TagDirective: TokenType <> yamlTagDirectiveToken');
   Temp.handle := FToken.data.tag_directive_handle;
   Temp.prefix := FToken.data.tag_directive_prefix;
   Result := TYamlTagDirectiveImpl.Create(@Temp);
@@ -1772,7 +1772,7 @@ type
   public
     constructor Create(out Event: PYamlEvent);
     destructor Destroy; override;
-    function GetType_: TYamlEventType;
+    function GetEventType: TYamlEventType;
     function GetStreamStartEncoding: TYamlEncoding;
     function GetDocumentStartVersionDirective: IYamlVersionDirective;
     function GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray;
@@ -1797,7 +1797,7 @@ type
     function GetEndMark: IYamlMark;
     function GetYamlEvent: PYamlEvent;
 
-    property Type_: TYamlEventType read GetType_;
+    property EventType: TYamlEventType read GetEventType;
     property StreamStartEncoding: TYamlEncoding read GetStreamStartEncoding;
     property DocumentStartVersionDirective: IYamlVersionDirective read GetDocumentStartVersionDirective;
     property DocumentStartTagDirectives: TIYamlTagDirectiveDynArray read GetDocumentStartTagDirectives;
@@ -1837,7 +1837,7 @@ begin
   inherited Destroy;
 end;
 
-function TYamlEventImpl.GetType_: TYamlEventType;
+function TYamlEventImpl.GetEventType: TYamlEventType;
 begin
   Result := FEvent.data.type_;
 end;
@@ -1845,14 +1845,14 @@ end;
 function TYamlEventImpl.GetStreamStartEncoding: TYamlEncoding;
 begin
   if FEvent.data.type_ <> yamlStreamStartEvent then
-    raise ERangeError.Create('YamlEvent.StreamStartEncoding: Type_ <> yamlStreamStartToken');
+    raise ERangeError.Create('YamlEvent.StreamStartEncoding: EventType <> yamlStreamStartToken');
   Result := FEvent.data.stream_start_encoding;
 end;
 
 function TYamlEventImpl.GetDocumentStartVersionDirective: IYamlVersionDirective;
 begin
   if FEvent.data.type_ <> yamlDocumentStartEvent then
-    raise ERangeError.Create('YamlEvent.DocumentStartVersionDirective: Type_ <> yamlDocumentStartEvent');
+    raise ERangeError.Create('YamlEvent.DocumentStartVersionDirective: EventType <> yamlDocumentStartEvent');
   Result := TYamlVersionDirectiveImpl.Create(FEvent.data.document_start_version_directive);
 end;
 
@@ -1862,7 +1862,7 @@ var
   i, L: Integer;
 begin
   if FEvent.data.type_ <> yamlDocumentStartEvent then
-    raise ERangeError.Create('YamlEvent.DocumentStartTagDirectives: Type_ <> yamlDocumentStartEvent');
+    raise ERangeError.Create('YamlEvent.DocumentStartTagDirectives: EventType <> yamlDocumentStartEvent');
   Start := PAnsiChar(Pointer(FEvent.data.document_start_tag_directives_start));
   Finish := PAnsiChar(Pointer(FEvent.data.document_start_tag_directives_start));
   L := (Finish - Start) div SizeOf(TYamlTagDirective);
@@ -1875,35 +1875,35 @@ end;
 function TYamlEventImpl.GetDocumentStartImplicit: Boolean;
 begin
   if FEvent.data.type_ <> yamlDocumentStartEvent then
-    raise ERangeError.Create('YamlEvent.DocumentStartImplicit: Type_ <> yamlDocumentStartEvent');
+    raise ERangeError.Create('YamlEvent.DocumentStartImplicit: EventType <> yamlDocumentStartEvent');
   Result := FEvent.data.document_start_implicit <> 0;
 end;
 
 function TYamlEventImpl.GetDocumentEndImplicit: Boolean;
 begin
   if FEvent.data.type_ <> yamlDocumentEndEvent then
-    raise ERangeError.Create('YamlEvent.DocumentEndImplicit: Type_ <> yamlDocumentEndEvent');
+    raise ERangeError.Create('YamlEvent.DocumentEndImplicit: EventType <> yamlDocumentEndEvent');
   Result := FEvent.data.document_end_implicit <> 0;
 end;
 
 function TYamlEventImpl.GetAliasAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlAliasEvent then
-    raise ERangeError.Create('YamlEvent.AliasAnchor: Type_ <> yamlAliasEvent');
+    raise ERangeError.Create('YamlEvent.AliasAnchor: EventType <> yamlAliasEvent');
   Result := UTF8Decode(FEvent.data.alias_anchor);
 end;
 
 function TYamlEventImpl.GetScalarAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
-    raise ERangeError.Create('YamlEvent.ScalarAnchor: Type_ <> yamlScalarEvent');
+    raise ERangeError.Create('YamlEvent.ScalarAnchor: EventType <> yamlScalarEvent');
   Result := UTF8Decode(FEvent.data.scalar_anchor);
 end;
 
 function TYamlEventImpl.GetScalarTag: YamlString;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
-    raise ERangeError.Create('YamlEvent.ScalarTag: Type_ <> yamlScalarEvent');
+    raise ERangeError.Create('YamlEvent.ScalarTag: EventType <> yamlScalarEvent');
   Result := UTF8Decode(FEvent.data.scalar_tag);
 end;
 
@@ -1912,7 +1912,7 @@ var
   Temp: UTF8String;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
-    raise ERangeError.Create('YamlEvent.ScalarTag: Type_ <> yamlScalarEvent');
+    raise ERangeError.Create('YamlEvent.ScalarTag: EventType <> yamlScalarEvent');
   if Assigned(FEvent.data.scalar_value) then
     SetString(Temp, FEvent.data.scalar_value, FEvent.data.scalar_length);
   Result := UTF8Decode(Temp);
@@ -1921,77 +1921,77 @@ end;
 function TYamlEventImpl.GetScalarPlainImplicit: Boolean;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
-    raise ERangeError.Create('YamlEvent.ScalarPlainImplicit: Type_ <> yamlScalarEvent');
+    raise ERangeError.Create('YamlEvent.ScalarPlainImplicit: EventType <> yamlScalarEvent');
   Result := FEvent.data.scalar_plain_implicit <> 0;
 end;
 
 function TYamlEventImpl.GetScalarQuotedImplicit: Boolean;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
-    raise ERangeError.Create('YamlEvent.ScalarQuotedImplicit: Type_ <> yamlScalarEvent');
+    raise ERangeError.Create('YamlEvent.ScalarQuotedImplicit: EventType <> yamlScalarEvent');
   Result := FEvent.data.scalar_quoted_implicit <> 0;
 end;
 
 function TYamlEventImpl.GetScalarStyle: TYamlScalarStyle;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
-    raise ERangeError.Create('YamlEvent.ScalarStyle: Type_ <> yamlScalarEvent');
+    raise ERangeError.Create('YamlEvent.ScalarStyle: EventType <> yamlScalarEvent');
   Result := FEvent.data.scalar_style;
 end;
 
 function TYamlEventImpl.GetSequenceStartAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
-    raise ERangeError.Create('YamlEvent.SequenceStartAnchor: Type_ <> yamlSequenceStartEvent');
+    raise ERangeError.Create('YamlEvent.SequenceStartAnchor: EventType <> yamlSequenceStartEvent');
   Result := UTF8Decode(FEvent.data.sequence_start_anchor);
 end;
 
 function TYamlEventImpl.GetSequenceStartTag: YamlString;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
-    raise ERangeError.Create('YamlEvent.SequenceStartTag: Type_ <> yamlSequenceStartEvent');
+    raise ERangeError.Create('YamlEvent.SequenceStartTag: EventType <> yamlSequenceStartEvent');
   Result := UTF8Decode(FEvent.data.sequence_start_tag);
 end;
 
 function TYamlEventImpl.GetSequenceStartImplicit: Boolean;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
-    raise ERangeError.Create('YamlEvent.SequenceStartImplicit: Type_ <> yamlSequenceStartEvent');
+    raise ERangeError.Create('YamlEvent.SequenceStartImplicit: EventType <> yamlSequenceStartEvent');
   Result := FEvent.data.sequence_start_implicit <> 0;
 end;
 
 function TYamlEventImpl.GetSequenceStartStyle: TYamlSequenceStyle;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
-    raise ERangeError.Create('YamlEvent.SequenceStartStyle: Type_ <> yamlSequenceStartEvent');
+    raise ERangeError.Create('YamlEvent.SequenceStartStyle: EventType <> yamlSequenceStartEvent');
   Result := FEvent.data.sequence_start_style;
 end;
 
 function TYamlEventImpl.GetMappingStartAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
-    raise ERangeError.Create('YamlEvent.MappingStartAnchor: Type_ <> yamlMappingStartEvent');
+    raise ERangeError.Create('YamlEvent.MappingStartAnchor: EventType <> yamlMappingStartEvent');
   Result := UTF8Decode(FEvent.data.mapping_start_anchor);
 end;
 
 function TYamlEventImpl.GetMappingStartTag: YamlString;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
-    raise ERangeError.Create('YamlEvent.MappingStartTag: Type_ <> yamlMappingStartEvent');
+    raise ERangeError.Create('YamlEvent.MappingStartTag: EventType <> yamlMappingStartEvent');
   Result := UTF8Decode(FEvent.data.mapping_start_tag);
 end;
 
 function TYamlEventImpl.GetMappingStartImplicit: Boolean;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
-    raise ERangeError.Create('YamlEvent.MappingStartImplicit: Type_ <> yamlMappingStartEvent');
+    raise ERangeError.Create('YamlEvent.MappingStartImplicit: EventType <> yamlMappingStartEvent');
   Result := FEvent.data.mapping_start_implicit <> 0;
 end;
 
 function TYamlEventImpl.GetMappingStartStyle: TYamlMappingStyle;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
-    raise ERangeError.Create('YamlEvent.MappingStartStyle: Type_ <> yamlMappingStartEvent');
+    raise ERangeError.Create('YamlEvent.MappingStartStyle: EventType <> yamlMappingStartEvent');
   Result := FEvent.data.mapping_start_style;
 end;
 
@@ -2177,7 +2177,7 @@ type
       DocumentInterface: IYamlDocument; Index: Integer);
     function GetDocument: IYamlDocument;
     function GetId: Integer;
-    function GetType_: TYamlNodeType;
+    function GetNodeType: TYamlNodeType;
     function GetTag: YamlString;
     function GetScalarValue: YamlString;
     function GetScalarStyle: TYamlScalarStyle;
@@ -2192,7 +2192,7 @@ type
 
     property Document: IYamlDocument read GetDocument;
     property Id: Integer read GetId;
-    property Type_: TYamlNodeType read GetType_;
+    property NodeType: TYamlNodeType read GetNodeType;
     property Tag: YamlString read GetTag;
     property ScalarValue: YamlString read GetScalarValue;
     property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
@@ -2273,7 +2273,7 @@ begin
   Result := _yaml_document_get_node(FDocument, FId + 1);
 end;
 
-function TYamlNodeImpl.GetType_: TYamlNodeType;
+function TYamlNodeImpl.GetNodeType: TYamlNodeType;
 begin
   Result := GetNode.type_;
 end;
@@ -2290,7 +2290,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlScalarNode then
-    raise ERangeError.Create('YamlNode.ScalarValue: Type_ <> yamlScalarNode');
+    raise ERangeError.Create('YamlNode.ScalarValue: NodeType <> yamlScalarNode');
   if Assigned(Node.data.scalar_value) then
     SetString(Temp, Node.data.scalar_value, Node.data.scalar_length);
   Result := UTF8Decode(Temp);
@@ -2302,7 +2302,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlScalarNode then
-    raise ERangeError.Create('YamlNode.ScalarStyle: Type_ <> yamlScalarNode');
+    raise ERangeError.Create('YamlNode.ScalarStyle: NodeType <> yamlScalarNode');
   Result := Node.data.scalar_style;
 end;
 
@@ -2314,7 +2314,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlSequenceNode then
-    raise ERangeError.Create('YamlNode.SequenceItems: Type_ <> yamlSequenceNode');
+    raise ERangeError.Create('YamlNode.SequenceItems: NodeType <> yamlSequenceNode');
   if Node.data.sequence_items_start <> Node.data.sequence_items_top then
   begin
     Start := PAnsiChar(Node.data.sequence_items_start);
@@ -2335,7 +2335,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlSequenceNode then
-    raise ERangeError.Create('YamlNode.AppendSequenceItem: Type_ <> yamlSequenceNode');
+    raise ERangeError.Create('YamlNode.AppendSequenceItem: NodeType <> yamlSequenceNode');
   if not Assigned(Item) then
     raise ERangeError.Create('YamlNode.AppendSequenceItem: Item = nil');
   if _yaml_document_append_sequence_item(FDocument^, FId, Item.Id) = 0 then
@@ -2348,7 +2348,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlSequenceNode then
-    raise ERangeError.Create('YamlNode.SequenceStyle: Type_ <> yamlSequenceNode');
+    raise ERangeError.Create('YamlNode.SequenceStyle: NodeType <> yamlSequenceNode');
   Result := Node.data.sequence_style;
 end;
 
@@ -2360,7 +2360,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlMappingNode then
-    raise ERangeError.Create('YamlNode.MappingPairs: Type_ <> yamlMappingNode');
+    raise ERangeError.Create('YamlNode.MappingPairs: NodeType <> yamlMappingNode');
   if Node.data.mapping_pairs_start <> Node.data.mapping_pairs_top then
   begin
     Start := PAnsiChar(Node.data.mapping_pairs_start);
@@ -2383,7 +2383,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlMappingNode then
-    raise ERangeError.Create('YamlNode.AppendMappingPair: Type_ <> yamlMappingNode');
+    raise ERangeError.Create('YamlNode.AppendMappingPair: NodeType <> yamlMappingNode');
   if not Assigned(Key) then
     raise ERangeError.Create('YamlNode.AppendMappingPair: Key = nil');
   if not Assigned(Value) then
@@ -2398,7 +2398,7 @@ var
 begin
   Node := GetNode;
   if Node.type_ <> yamlMappingNode then
-    raise ERangeError.Create('YamlNode.MappingStyle: Type_ <> yamlMappingNode');
+    raise ERangeError.Create('YamlNode.MappingStyle: NodeType <> yamlMappingNode');
   Result := Node.data.mapping_style;
 end;
 
