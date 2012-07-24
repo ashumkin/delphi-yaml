@@ -143,12 +143,35 @@ type
     property ProblemMark: IYamlMark read FProblemMark;
   end;
   (** Cannot compose a YAML document. *)
-  EYamlComposerError = class(EYamlError);
+  EYamlComposerError = class(EYamlError)
+  protected
+    FContext, FProblem: YamlString;
+    FContextMark, FProblemMark: IYamlMark;
+  public
+    constructor Create(const Context: YamlString; const ContextMark: IYamlMark;
+      const Problem: YamlString; const ProblemMark: IYamlMark);
+    property Context: YamlString read FContext;
+    property ContextMark: IYamlMark read FContextMark;
+    property Problem: YamlString read FProblem;
+    property ProblemMark: IYamlMark read FProblemMark;
+  end;
 
   (** Cannot write to the output stream. *)
-  EYamlWriterError = class(EYamlError);
+  EYamlWriterError = class(EYamlError)
+  protected
+    FProblem: YamlString;
+  public
+    constructor Create(const Problem: YamlString);
+    property Problem: YamlString read FProblem;
+  end;
   (** Cannot emit a YAML stream. *)
-  EYamlEmitterError = class(EYamlError);
+  EYamlEmitterError = class(EYamlError)
+  protected
+    FProblem: YamlString;
+  public
+    constructor Create(const Problem: YamlString);
+    property Problem: YamlString read FProblem;
+  end;
 
   (** The pointer position. *)
   IYamlMark = interface(IInterface)
@@ -1522,6 +1545,35 @@ begin
   FProblemMark := ProblemMark;
 end;
 
+constructor EYamlComposerError.Create(const Context: YamlString; const ContextMark: IYamlMark;
+  const Problem: YamlString; const ProblemMark: IYamlMark);
+begin
+  if Context <> '' then
+    inherited CreateFmt('Composer error: %s at line %d, column %d'#13#10 +
+      '%s at line %d, column %d',
+      [Context, ContextMark.Line + 1, ContextMark.Column + 1,
+        Problem, ProblemMark.Line + 1, ProblemMark.Column + 1])
+  else
+    inherited CreateFmt('Composer error: %s at line %d, column %d',
+      [Problem, ProblemMark.Line + 1, ProblemMark.Column + 1]);
+  FContext := Context;
+  FContextMark := ContextMark;
+  FProblem := Problem;
+  FProblemMark := ProblemMark;
+end;
+
+constructor EYamlWriterError.Create(const Problem: YamlString);
+begin
+  inherited CreateFmt('Writer error: %s', [Problem]);
+  FProblem := Problem;
+end;
+
+constructor EYamlEmitterError.Create(const Problem: YamlString);
+begin
+  inherited CreateFmt('Emitter error: %s', [Problem]);
+  FProblem := Problem;
+end;
+
 type
   TYamlMarkImpl = class(TInterfacedObject, IYamlMark)
   private
@@ -2802,6 +2854,11 @@ begin
   yamlParserError:
     raise EYamlParserError.Create(UTF8Decode(FParserError.problem),
       TYamlMarkImpl.Create(@(FParserError.problem_mark)));
+  yamlComposerError:
+    raise EYamlComposerError.Create(UTF8Decode(FParserError.context),
+      TYamlMarkImpl.Create(@(FParserError.context_mark)),
+      UTF8Decode(FParserError.problem),
+      TYamlMarkImpl.Create(@(FParserError.problem_mark)));
   else
     raise EYamlError.Create('YamlParser: Internal error');
   end;
@@ -3230,7 +3287,16 @@ type
 
 procedure TYamlEmitterImpl.RaiseYamlException;
 begin
-  // TODO: yaml emitter exceptions
+  case FEmitterError.error of
+  yamlMemoryError:
+    raise EYamlMemoryError.Create('YamlEmitter: out of memory');
+  yamlWriterError:
+    raise EYamlWriterError.Create(UTF8Decode(FEmitterError.problem));
+  yamlEmitterError:
+    raise EYamlEmitterError.Create(UTF8Decode(FEmitterError.problem));
+  else
+    raise EYamlError.Create('YamlEmitter: Internal error');
+  end;
 end;
 
 function YamlOutputAdapter(var data; buffer: PAnsiChar; size: Integer):
