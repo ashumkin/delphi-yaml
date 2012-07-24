@@ -1148,10 +1148,10 @@ type
   IYamlOutputBuffer = interface(IYamlOutput)
   ['{AFA9CE76-A93D-4F4A-BAE5-91263B7A091D}']
     function GetSize: Integer;
-    function GetSizeWritten: PInteger;
+    function GetSizeWritten: Integer;
     function GetValue: YamlString;
     property Size: Integer read GetSize;
-    property SizeWritten: PInteger read GetSizeWritten;
+    property SizeWritten: Integer read GetSizeWritten;
     property Value: YamlString read GetValue;
   end;
   YamlOutput = class
@@ -2904,7 +2904,15 @@ type
     property Encoding: TYamlEncoding read GetEncoding;
   end;
 
-  TYamlOutputMemory = class(TYamlOutputImpl, IYamlOutputBuffer)
+  IYamlOutputMemory = interface(IYamlOutputBuffer)
+  ['{577B5A8D-AFA4-4002-B076-AEB0AB71E655}']
+    function GetPSizeWritten: PInteger;
+    function GetMem: Pointer;
+    property PSizeWritten: PInteger read GetPSizeWritten;
+    property Mem: Pointer read GetMem;
+  end;
+
+  TYamlOutputMemory = class(TYamlOutputImpl, IYamlOutputBuffer, IYamlOutputMemory)
   protected
     FMem: Pointer;
     FSize: Integer;
@@ -2914,11 +2922,15 @@ type
       Encoding: TYamlEncoding);
     procedure Write(const Buffer; Size: Integer); override;
     function GetSize: Integer;
-    function GetSizeWritten: PInteger;
+    function GetSizeWritten: Integer;
     function GetValue: YamlString; virtual;
+    function GetPSizeWritten: PInteger;
+    function GetMem: Pointer;
     property Size: Integer read GetSize;
-    property SizeWritten: PInteger read GetSizeWritten;
+    property SizeWritten: Integer read GetSizeWritten;
     property Value: YamlString read GetValue;
+    property PSizeWritten: PInteger read GetPSizeWritten;
+    property Mem: Pointer read GetMem;
   end;
 
   IYamlOutputStream = interface
@@ -2945,7 +2957,7 @@ type
     property Stream: TStream read GetStream;
   end;
 const
-  IID_IYamlOutputBuffer : TGUID = '{AFA9CE76-A93D-4F4A-BAE5-91263B7A091D}';
+  IID_IYamlOutputMemory : TGUID = '{577B5A8D-AFA4-4002-B076-AEB0AB71E655}';
   IID_IYamlOutputStream : TGUID = '{9747F743-2CC7-4B1E-96D0-1C726B1F38FD}';
 
 constructor TYamlOutputImpl.Create(Encoding: TYamlEncoding);
@@ -2993,9 +3005,9 @@ begin
   Result := FSize;
 end;
 
-function TYamlOutputMemory.GetSizeWritten: PInteger;
+function TYamlOutputMemory.GetSizeWritten: Integer;
 begin
-  Result := @FOffset;
+  Result := FOffset;
 end;
 
 function TYamlOutputMemory.GetValue: YamlString;
@@ -3008,6 +3020,16 @@ begin
     Result := UTF8Decode(IntValue);
   end else
     raise EYamlError.Create('YamlOutput.Value: only UTF-8 is supported');
+end;
+
+function TYamlOutputMemory.GetPSizeWritten: PInteger;
+begin
+  Result := @FOffset;
+end;
+
+function TYamlOutputMemory.GetMem: Pointer;
+begin
+  Result := FMem;
 end;
 
 class function YamlOutput.Create(Output: Pointer; Size: Integer; Encoding: TYamlEncoding): IYamlOutput;
@@ -3172,12 +3194,23 @@ begin
   // TODO: yaml emitter exceptions
 end;
 
+function YamlOutputAdapter(var data; buffer: PAnsiChar; size: Integer):
+  Integer; cdecl;
+begin
+  try
+    IYamlOutput(data).Write(buffer^, size);
+    Result := 1;
+  except
+    Result := 0;
+  end;
+end;
+
 constructor TYamlEmitterImpl.Create(const Output: IYamlOutput; const Settings: IYamlEmitterSettings);
 var
-  OutputAsIYamlOutputBuffer: IYamlOutputBuffer;
+  OutputAsIYamlOutputMemory: IYamlOutputMemory;
   OutputAsIYamlOutputStream: IYamlOutputStream;
 begin
-  if not Assigned(Input) then
+  if not Assigned(Output) then
     raise ERangeError.Create('YamlEmitter.Create: Output = nil');
   inherited Create;
   FOutput := Output;
@@ -3187,29 +3220,31 @@ begin
   if _yaml_emitter_initialize(FEmitter) = 0 then
     raise EYamlMemoryError.Create('YamlEmitter.Create: out of memory');
   _yaml_emitter_set_encoding(FEmitter, FOutput.Encoding);
-  if Supports(FOutput, IID_IYamlOutputBuffer) then
+  if Supports(FOutput, IID_IYamlOutputMemory) then
   begin
-    OutputAsIYamlOutputBuffer := FOutput as IYamlOutputBuffer;
-    _yaml_emitter_set_output_string(FEmitter,
-      PAnsiChar(OutputAsIYamlOutputBuffer.Mem), InputAsIYamlInputMemory.Size);
-  end else if Supports(FInput, IID_IYamlInputStream) then
+    OutputAsIYamlOutputMemory := FOutput as IYamlOutputMemory;
+    _yaml_emitter_set_output_string(FEmitter, OutputAsIYamlOutputMemory.Mem,
+      OutputAsIYamlOutputMemory.Size, OutputAsIYamlOutputMemory.PSizeWritten^);
+  end else if Supports(FOutput, IID_IYamlInputStream) then
   begin
-    InputAsIYamlInputStream := FInput as IYamlInputStream;
-    _yaml_parser_set_input_file(FParser, InputAsIYamlInputStream.Stream);
+    OutputAsIYamlOutputStream := FOutput as IYamlOutputStream;
+    _yaml_emitter_set_output_file(FEmitter, OutputAsIYamlOutputStream.Stream);
   end else
   begin
-    _yaml_parser_set_input(FParser, YamlInputAdapter, FInput);
+    _yaml_emitter_set_output(FParser, YamlOutputAdapter, FOutput);
   end;
 end;
 
 destructor TYamlEmitterImpl.Destroy;
 begin
-
+  _yaml_emitter_delete(FEmitter);
+  inherited Destroy;
 end;
 
 procedure TYamlEmitterImpl.Flush;
 begin
-
+  if _yaml_emitter_flush(FEmitter) = 0 then
+    RaiseYamlException;
 end;
 
 class function YamlEventEmitter.Create(const Output: IYamlOutput;
