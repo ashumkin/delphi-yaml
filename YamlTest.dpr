@@ -5,7 +5,8 @@ program YamlTest;
 uses
   YamlIntermediate in 'YamlIntermediate.pas',
   YamlThin in 'YamlThin.pas',
-  SysUtils;
+  SysUtils,
+  YamlDelphiFeatures in 'YamlDelphiFeatures.pas';
 
 var
   TestString: UTF8String =

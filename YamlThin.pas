@@ -192,56 +192,56 @@ type TYamlMappingStyle = (
 
 (** Token types. *)
 type TYamlTokenType = (
-    (** An empty token. *)
-    yamlNoToken,
+  (** An empty token. *)
+  yamlNoToken,
 
-    (** A STREAM-START token. *)
-    yamlStreamStartToken,
-    (** A STREAM-END token. *)
-    yamlStreamEndToken,
+  (** A STREAM-START token. *)
+  yamlStreamStartToken,
+  (** A STREAM-END token. *)
+  yamlStreamEndToken,
 
-    (** A VERSION-DIRECTIVE token. *)
-    yamlVersionDirectiveToken,
-    (** A TAG-DIRECTIVE token. *)
-    yamlTagDirectiveToken,
-    (** A DOCUMENT-START token. *)
-    yamlDocumentStartToken,
-    (** A DOCUMENT-END token. *)
-    yamlDocumentEndToken,
+  (** A VERSION-DIRECTIVE token. *)
+  yamlVersionDirectiveToken,
+  (** A TAG-DIRECTIVE token. *)
+  yamlTagDirectiveToken,
+  (** A DOCUMENT-START token. *)
+  yamlDocumentStartToken,
+  (** A DOCUMENT-END token. *)
+  yamlDocumentEndToken,
 
-    (** A BLOCK-SEQUENCE-START token. *)
-    yamlBlockSequenceStartToken,
-    (** A BLOCK-SEQUENCE-END token. *)
-    yamlBlockMappingStartToken,
-    (** A BLOCK-END token. *)
-    yamlBlockEndToken,
+  (** A BLOCK-SEQUENCE-START token. *)
+  yamlBlockSequenceStartToken,
+  (** A BLOCK-SEQUENCE-END token. *)
+  yamlBlockMappingStartToken,
+  (** A BLOCK-END token. *)
+  yamlBlockEndToken,
 
-    (** A FLOW-SEQUENCE-START token. *)
-    yamlFlowSequenceStartToken,
-    (** A FLOW-SEQUENCE-END token. *)
-    yamlFlowSequenceEndToken,
-    (** A FLOW-MAPPING-START token. *)
-    yamlFlowMappingStartToken,
-    (** A FLOW-MAPPING-END token. *)
-    yamlFlowMappingEndToken,
+  (** A FLOW-SEQUENCE-START token. *)
+  yamlFlowSequenceStartToken,
+  (** A FLOW-SEQUENCE-END token. *)
+  yamlFlowSequenceEndToken,
+  (** A FLOW-MAPPING-START token. *)
+  yamlFlowMappingStartToken,
+  (** A FLOW-MAPPING-END token. *)
+  yamlFlowMappingEndToken,
 
-    (** A BLOCK-ENTRY token. *)
-    yamlBlockEntryToken,
-    (** A FLOW-ENTRY token. *)
-    yamlFlowEntryToken,
-    (** A KEY token. *)
-    yamlKeyToken,
-    (** A VALUE token. *)
-    yamlValueToken,
+  (** A BLOCK-ENTRY token. *)
+  yamlBlockEntryToken,
+  (** A FLOW-ENTRY token. *)
+  yamlFlowEntryToken,
+  (** A KEY token. *)
+  yamlKeyToken,
+  (** A VALUE token. *)
+  yamlValueToken,
 
-    (** An ALIAS token. *)
-    yamlAliasToken,
-    (** An ANCHOR token. *)
-    yamlAnchorToken,
-    (** A TAG token. *)
-    yamlTagToken,
-    (** A SCALAR token. *)
-    yamlScalarToken
+  (** An ALIAS token. *)
+  yamlAliasToken,
+  (** An ANCHOR token. *)
+  yamlAnchorToken,
+  (** A TAG token. *)
+  yamlTagToken,
+  (** A SCALAR token. *)
+  yamlScalarToken
 );
 
 (** The token structure. *)

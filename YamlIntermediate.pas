@@ -9,8 +9,9 @@ unit YamlIntermediate;
 interface
 
 uses
-  SysUtils, Classes, Types, YamlThin;
+  SysUtils, Classes, Types, YamlThin, YamlDelphiFeatures;
 
+  {$INCLUDE 'YamlDelphiFeatures.inc'}
 
 type
   (**
@@ -58,7 +59,7 @@ type
    *)
 
   (** The character type (UTF-8 octet). *)
-  YamlString = WideString; // change to UnicodeString on XE2
+  YamlString = UnicodeString;
 
   (** The version directive data. *)
   IYamlVersionDirective = interface(IInterface)
@@ -93,11 +94,31 @@ type
 
   (** The stream encoding. *)
   TYamlEncoding = YamlThin.TYamlEncoding;
+const
+  (** Let the parser choose the encoding. *)
+  yamlAnyEncoding = YamlThin.yamlAnyEncoding;
+  (** The default UTF-8 encoding. *)
+  yamlUtf8Encoding = YamlThin.yamlUtf8Encoding;
+  (** The UTF-16-LE encoding with BOM. *)
+  yamlUtf16leEncoding = YamlThin.yamlUtf16leEncoding;
+  (** The UTF-16-BE encoding with BOM. *)
+  yamlUtf16beEncoding = YamlThin.yamlUtf16beEncoding;
 
+type
   (** Line break types. *)
 
   TYamlBreak = YamlThin.TYamlBreak;
+const
+  (** Let the parser choose the break type. *)
+  yamlAnyBreak = YamlThin.yamlAnyBreak;
+  (** Use CR for line breaks (Mac style). *)
+  yamlCrBreak = YamlThin.yamlCrBreak;
+  (** Use LN for line breaks (Unix style). *)
+  yamlLnBreak = YamlThin.yamlLnBreak;
+  (** Use CR LN for line breaks (DOS style). *)
+  yamlCrLnBreak = YamlThin.yamlCrLnBreak;
 
+type
   (** Many bad things could happen with the parser and emitter. *)
   EYamlError = class(EAbort);
   (** No error is produced. *)
@@ -198,13 +219,49 @@ type
 
   (** Scalar styles. *)
   TYamlScalarStyle = YamlThin.TYamlScalarStyle;
+const
+  (** Let the emitter choose the style. *)
+  yamlAnyScalarStyle = YamlThin.yamlAnyScalarStyle;
 
+  (** The plain scalar style. *)
+  yamlPlainScalarStyle = YamlThin.yamlPlainScalarStyle;
+
+  (** The single-quoted scalar style. *)
+  yamlSingleQuotedScalarStyle = YamlThin.yamlSingleQuotedScalarStyle;
+  (** The double-quoted scalar style. *)
+  yamlDoubleQuotedScalarStyle = YamlThin.yamlDoubleQuotedScalarStyle;
+
+  (** The literal scalar style. *)
+  yamlLiteralScalarStyle = YamlThin.yamlLiteralScalarStyle;
+  (** The folded scalar style. *)
+  yamlFoldedScalarStyle = YamlThin.yamlFoldedScalarStyle;
+
+type
   (** Sequence styles. *)
   TYamlSequenceStyle = YamlThin.TYamlSequenceStyle;
+const
+  (** Let the emitter choose the style. *)
+  yamlAnySequenceStyle = YamlThin.yamlAnySequenceStyle;
 
+  (** The block sequence style. *)
+  yamlBlockSequenceStyle = YamlThin.yamlBlockSequenceStyle;
+  (** The flow sequence style. *)
+  yamlFlowSequenceStyle = YamlThin.yamlFlowSequenceStyle;
+
+type
   (** Mapping styles. *)
   TYamlMappingStyle = YamlThin.TYamlMappingStyle;
+const
+  (** Let the emitter choose the style. *)
+  yamlAnyMappingStyle = YamlThin.yamlAnyMappingStyle;
 
+  (** The block mapping style. *)
+  yamlBlockMappingStyle = YamlThin.yamlBlockMappingStyle;
+  (** The flow mapping style. *)
+  yamlFlowMappingStyle = YamlThin.yamlFlowMappingStyle;
+  (*  YAML_FLOW_SET_MAPPING_STYLE   *)
+
+type
   (** @} *)
 
   (**
@@ -214,7 +271,59 @@ type
 
   (** Token types. *)
   TYamlTokenType = YamlThin.TYamlTokenType;
+const
+  (** An empty token. *)
+  yamlNoToken = YamlThin.yamlNoToken;
 
+  (** A STREAM-START token. *)
+  yamlStreamStartToken = YamlThin.yamlStreamStartToken;
+  (** A STREAM-END token. *)
+  yamlStreamEndToken = YamlThin.yamlStreamEndToken;
+
+  (** A VERSION-DIRECTIVE token. *)
+  yamlVersionDirectiveToken = YamlThin.yamlVersionDirectiveToken;
+  (** A TAG-DIRECTIVE token. *)
+  yamlTagDirectiveToken = YamlThin.yamlTagDirectiveToken;
+  (** A DOCUMENT-START token. *)
+  yamlDocumentStartToken = YamlThin.yamlDocumentStartToken;
+  (** A DOCUMENT-END token. *)
+  yamlDocumentEndToken = YamlThin.yamlDocumentEndToken;
+
+  (** A BLOCK-SEQUENCE-START token. *)
+  yamlBlockSequenceStartToken = YamlThin.yamlBlockSequenceStartToken;
+  (** A BLOCK-SEQUENCE-END token. *)
+  yamlBlockMappingStartToken = YamlThin.yamlBlockMappingStartToken;
+  (** A BLOCK-END token. *)
+  yamlBlockEndToken = YamlThin.yamlBlockEndToken;
+
+  (** A FLOW-SEQUENCE-START token. *)
+  yamlFlowSequenceStartToken = YamlThin.yamlFlowSequenceStartToken;
+  (** A FLOW-SEQUENCE-END token. *)
+  yamlFlowSequenceEndToken = YamlThin.yamlFlowSequenceEndToken;
+  (** A FLOW-MAPPING-START token. *)
+  yamlFlowMappingStartToken = YamlThin.yamlFlowMappingStartToken;
+  (** A FLOW-MAPPING-END token. *)
+  yamlFlowMappingEndToken = YamlThin.yamlFlowMappingEndToken;
+
+  (** A BLOCK-ENTRY token. *)
+  yamlBlockEntryToken = YamlThin.yamlBlockEntryToken;
+  (** A FLOW-ENTRY token. *)
+  yamlFlowEntryToken = YamlThin.yamlFlowEntryToken;
+  (** A KEY token. *)
+  yamlKeyToken = YamlThin.yamlKeyToken;
+  (** A VALUE token. *)
+  yamlValueToken = YamlThin.yamlValueToken;
+
+  (** An ALIAS token. *)
+  yamlAliasToken = YamlThin.yamlAliasToken;
+  (** An ANCHOR token. *)
+  yamlAnchorToken = YamlThin.yamlAnchorToken;
+  (** A TAG token. *)
+  yamlTagToken = YamlThin.yamlTagToken;
+  (** A SCALAR token. *)
+  yamlScalarToken = YamlThin.yamlScalarToken;
+
+type
   (** The token structure. *)
   IYamlToken = interface(IInterface)
   ['{AB5E049D-123D-45EB-BFB3-D7B5424AECB4}']
@@ -292,7 +401,36 @@ type
 
   (** Event types. *)
   TYamlEventType = YamlThin.TYamlEventType;
+const
+  (** An empty event. *)
+  yamlNoEvent = YamlThin.yamlNoEvent;
 
+  (** A STREAM-START event. *)
+  yamlStreamStartEvent = YamlThin.yamlStreamStartEvent;
+  (** A STREAM-END event. *)
+  yamlStreamEndEvent = YamlThin.yamlStreamEndEvent;
+
+  (** A DOCUMENT-START event. *)
+  yamlDocumentStartEvent = YamlThin.yamlDocumentStartEvent;
+  (** A DOCUMENT-END event. *)
+  yamlDocumentEndEvent = YamlThin.yamlDocumentEndEvent;
+
+  (** An ALIAS event. *)
+  yamlAliasEvent = YamlThin.yamlAliasEvent;
+  (** A SCALAR event. *)
+  yamlScalarEvent = YamlThin.yamlScalarEvent;
+
+  (** A SEQUENCE-START event. *)
+  yamlSequenceStartEvent = YamlThin.yamlSequenceStartEvent;
+  (** A SEQUENCE-END event. *)
+  yamlSequenceEndEvent = YamlThin.yamlSequenceEndEvent;
+
+  (** A MAPPING-START event. *)
+  yamlMappingStartEvent = YamlThin.yamlMappingStartEvent;
+  (** A MAPPING-END event. *)
+  yamlMappingEndEvent = YamlThin.yamlMappingEndEvent;
+
+type
   (** The event structure. *)
   IYamlEvent = interface(IInterface)
   ['{12F279D3-BADF-4F5E-8E4E-D895D0A20AF0}']
@@ -616,7 +754,18 @@ const yamlDefaultMappingTag   = yamlMapTag;
   (** Node types. *)
 type
   TYamlNodeType = YamlThin.TYamlNodeType;
+const
+  (** An empty node. *)
+  yamlNoNode = YamlThin.yamlNoNode;
 
+  (** A scalar node. *)
+  yamlScalarNode = YamlThin.yamlScalarNode;
+  (** A sequence node. *)
+  yamlSequenceNode = YamlThin.yamlSequenceNode;
+  (** A mapping node. *)
+  yamlMappingNode = YamlThin.yamlMappingNode;
+
+type
   (** The forward definition of a document structure. *)
   IYamlDocument = interface;
 
@@ -1822,8 +1971,6 @@ type
     property EndMark: IYamlMark read GetEndMark;
     property YamlEvent: PYamlEvent read GetYamlEvent;
   end;
-const
-  IID_IYamlEventImpl : TGUID = '{456ADABA-5C5B-4F69-B8F4-3882DDA8D81A}';
 
 constructor TYamlEventImpl.Create(out Event: PYamlEvent);
 begin
@@ -2244,8 +2391,6 @@ type
     property EndMark: IYamlMark read GetEndMark;
     property YamlDocument: PYamlDocument read GetYamlDocument;
   end;
-const
-  IID_IYamlDocumentImpl : TGUID = '{3133D4B9-3D37-4AC7-9060-E42C12980EAE}';
 
 constructor TYamlNodeImpl.Create(Document: PYamlDocument;
   DocumentInterface: IYamlDocument; Index: Integer);
@@ -2657,9 +2802,6 @@ type
     function GetStream: TStream;
     property Stream: TStream read GetStream;
   end;
-const
-  IID_IYamlInputMemory : TGUID = '{903F0B4E-3806-458A-8657-A2CD791637FC}';
-  IID_IYamlInputStream : TGUID = '{87CAB406-13C2-4045-804F-969E6FAFEA1E}';
 
 constructor TYamlInputImpl.Create(Encoding: TYamlEncoding);
 begin
@@ -2897,11 +3039,11 @@ begin
   if _yaml_parser_initialize(FParser) = 0 then
     raise EYamlMemoryError.Create('YamlParser.Create: out of memory');
   _yaml_parser_set_encoding(FParser, FInput.Encoding);
-  if Supports(FInput, IID_IYamlInputMemory, InputAsIYamlInputMemory) then
+  if Supports(FInput, IYamlInputMemory, InputAsIYamlInputMemory) then
   begin
     _yaml_parser_set_input_string(FParser,
       PAnsiChar(InputAsIYamlInputMemory.Mem), InputAsIYamlInputMemory.Size);
-  end else if Supports(FInput, IID_IYamlInputStream, InputAsIYamlInputStream) then
+  end else if Supports(FInput, IYamlInputStream, InputAsIYamlInputStream) then
   begin
     _yaml_parser_set_input_file(FParser, InputAsIYamlInputStream.Stream);
   end else
@@ -3042,9 +3184,6 @@ type
     function GetStream: TStream;
     property Stream: TStream read GetStream;
   end;
-const
-  IID_IYamlOutputMemory : TGUID = '{577B5A8D-AFA4-4002-B076-AEB0AB71E655}';
-  IID_IYamlOutputStream : TGUID = '{9747F743-2CC7-4B1E-96D0-1C726B1F38FD}';
 
 constructor TYamlOutputImpl.Create(Encoding: TYamlEncoding);
 begin
@@ -3326,11 +3465,11 @@ begin
   if _yaml_emitter_initialize(FEmitter) = 0 then
     raise EYamlMemoryError.Create('YamlEmitter.Create: out of memory');
   _yaml_emitter_set_encoding(FEmitter, FOutput.Encoding);
-  if Supports(FOutput, IID_IYamlOutputMemory, OutputAsIYamlOutputMemory) then
+  if Supports(FOutput, IYamlOutputMemory, OutputAsIYamlOutputMemory) then
   begin
     _yaml_emitter_set_output_string(FEmitter, OutputAsIYamlOutputMemory.Mem,
       OutputAsIYamlOutputMemory.Size, OutputAsIYamlOutputMemory.PSizeWritten^);
-  end else if Supports(FOutput, IID_IYamlInputStream, OutputAsIYamlOutputStream) then
+  end else if Supports(FOutput, IYamlInputStream, OutputAsIYamlOutputStream) then
   begin
     _yaml_emitter_set_output_file(FEmitter, OutputAsIYamlOutputStream.Stream);
   end else
@@ -3382,7 +3521,7 @@ begin
     raise ERangeError.Create('YamlEventEmitter.Emit: Event = nil');
   FFlushed := False;
   try
-    if not Supports(Event, IID_IYamlEventImpl, EventAsIYamlEventImpl) then
+    if not Supports(Event, IYamlEventImpl, EventAsIYamlEventImpl) then
       raise ERangeError.Create('YamlEventEmitter.Emit: Event is not created by YamlIntermediate');
     EventPtr := EventAsIYamlEventImpl.YamlEvent;
     if _yaml_emitter_emit(FEmitter, EventPtr) = 0 then
@@ -3464,7 +3603,7 @@ begin
       raise ERangeError.Create('YamlDocumentEmitter.Dump: emitter is already closed');
     if not FOpened then
       Open;
-    if not Supports(Document, IID_IYamlDocumentImpl, DocumentAsIYamlDocumentImpl) then
+    if not Supports(Document, IYamlDocumentImpl, DocumentAsIYamlDocumentImpl) then
       raise ERangeError.Create('YamlDocumentEmitter.Dump: Document is not created by YamlIntermediate');
     DocumentPtr := DocumentAsIYamlDocumentImpl.YamlDocument;
     if _yaml_emitter_dump(FEmitter, DocumentPtr) = 0 then
