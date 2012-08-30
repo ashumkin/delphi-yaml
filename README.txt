@@ -1,5 +1,11 @@
 Delphi-YAML - a Delphi bindings for libyaml .
 
+
+Dependencies:
+- Borland C++
+- dUnit: http://dunit.sf.net/
+- CVariants: https://bitbucket.org/OCTAGRAM/delphi-cvariants
+
 Use compile.cmd to recompile C part of libyaml.
 
 You can download Borland C++ 5.5 free command line tools here: 
