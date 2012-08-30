@@ -5,6 +5,7 @@
 
 {$Z4} // Size of enumerations is 4, don't remove!!!
 
+{$WARN UNSAFE_TYPE OFF} // PAnsiChar
 
 unit YamlThin;
 
@@ -978,56 +979,7 @@ type
 (**
  * The states of the parser.
  *)
-type TYamlParserState = (
-  (** Expect STREAM-START. *)
-  yamlParseStreamStartState,
-  (** Expect the beginning of an implicit document. *)
-  yamlParseImplicitDocumentStartState,
-  (** Expect DOCUMENT-START. *)
-  yamlParseDocumentStartState,
-  (** Expect the content of a document. *)
-  yamlParseDocumentContentState,
-  (** Expect DOCUMENT-END. *)
-  yamlParseDocumentEndState,
-  (** Expect a block node. *)
-  yamlParseBlocakNodeState,
-  (** Expect a block node or indentless sequence. *)
-  yamlParseBlockNodeOrIndentlessSequenceState,
-  (** Expect a flow node. *)
-  yamlParseFlowNodeState,
-  (** Expect the first entry of a block sequence. *)
-  yamlParseBlockSequenceFirstEntryState,
-  (** Expect an entry of a block sequence. *)
-  yamlParseBlockSequenceEntryState,
-  (** Expect an entry of an indentless sequence. *)
-  yamlParseIndentlessSequenceEntryState,
-  (** Expect the first key of a block mapping. *)
-  yamlParseBlockMappingFirstKeyState,
-  (** Expect a block mapping key. *)
-  yamlParseBlockMappingKeyState,
-  (** Expect a block mapping value. *)
-  yamlParseBlockMappingValueState,
-  (** Expect the first entry of a flow sequence. *)
-  YamlParseFlowSequenceFirstEntryState,
-  (** Expect an entry of a flow sequence. *)
-  yamlParseFlowSequenceEntryState,
-  (** Expect a key of an ordered mapping. *)
-  yamlParseFlowSequenceEntryMappingKeyState,
-  (** Expect a value of an ordered mapping. *)
-  yamlParseFlowSequenceEntryMappingValueState,
-  (** Expect the and of an ordered mapping entry. *)
-  yamlParseFlowSequenceEntryMappingEndState,
-  (** Expect the first key of a flow mapping. *)
-  yamlParseFlowMappingFirstKeyState,
-  (** Expect a key of a flow mapping. *)
-  yamlParseFlowMappingKeyState,
-  (** Expect a value of a flow mapping. *)
-  yamlParseFlowMappingValueState,
-  (** Expect an empty value of a flow mapping. *)
-  yamlParseFlowMappingEmptyValueState,
-  (** Expect nothing. *)
-  yamlParseEndState
-);
+// yaml_parser_state_t
 
 (**
  * This structure holds aliases data.
@@ -1254,44 +1206,7 @@ type TYamlWriteHandler = function(var data; buffer: PAnsiChar; size: Integer):
   Integer; cdecl;
 
 (** The emitter states. *)
-type TYamlEmitterState = (
-    (** Expect STREAM-START. *)
-    yamlEmitStreamStartState,
-    (** Expect the first DOCUMENT-START or STREAM-END. *)
-    yamlEmitFirstDocumentStartState,
-    (** Expect DOCUMENT-START or STREAM-END. *)
-    yamlEmitDocumentStartState,
-    (** Expect the content of a document. *)
-    yamlEmitDocumentContentState,
-    (** Expect DOCUMENT-END. *)
-    yamlEmitDocumentEndState,
-    (** Expect the first item of a flow sequence. *)
-    yamlEmitFlowSequenceFirstItemState,
-    (** Expect an item of a flow sequence. *)
-    yamlEmitFlowSequenceItemState,
-    (** Expect the first key of a flow mapping. *)
-    yamlEmitFlowMappingFirstKeyState,
-    (** Expect a key of a flow mapping. *)
-    yamlEmitFlowMappingKeyState,
-    (** Expect a value for a simple key of a flow mapping. *)
-    yamlEmitFlowMappingSimpleValueState,
-    (** Expect a value of a flow mapping. *)
-    yamlEmitFlowMappingValueState,
-    (** Expect the first item of a block sequence. *)
-    yamlEmitBlockSequenceFirstItemState,
-    (** Expect an item of a block sequence. *)
-    yamlEmitBlockSequenceItemState,
-    (** Expect the first key of a block mapping. *)
-    yamlEmitBlockMappingFirstKeyState,
-    (** Expect the key of a block mapping. *)
-    yamlEmitBlockMappingKeyState,
-    (** Expect a value for a simple key of a block mapping. *)
-    yamlEmitBlockMappingSimpleValueState,
-    (** Expect a value of a block mapping. *)
-    yamlEmitBlockMappingValueState,
-    (** Expect nothing. *)
-    yamlEmitEndState
-);
+// yaml_emitter_state_t
 
 (**
  * The emitter structure.
@@ -1521,6 +1436,8 @@ implementation
 
 //-//-//-//-//-//-//-//-//
 
+{$WARN UNSAFE_CODE OFF}
+
 // C std library
 
 function _memset(P: Pointer; B: Integer; count: Integer): pointer; cdecl;
@@ -1565,11 +1482,6 @@ begin
   FreeMem(Block);
 end;
 
-function _strlen(const s : PAnsiChar) : Integer; cdecl;
-begin
-  Result := StrLen(s);
-end;
-
 function _strdup(const s1 : PAnsiChar) : PAnsiChar; cdecl;
 var
   L : Integer;
@@ -1582,6 +1494,13 @@ begin
     GetMem(Result, L + 1);
     Move(s1^, Result^, L + 1);
   end;
+end;
+
+{$WARN UNSAFE_CODE ON}
+
+function _strlen(const s : PAnsiChar) : Integer; cdecl;
+begin
+  Result := StrLen(s);
 end;
 
 function _sprintf(const s: PAnsiChar; const format: PAnsiChar): Integer; cdecl; varargs; external 'msvcrt.dll' name 'sprintf';
@@ -1598,6 +1517,8 @@ end;
 
 function _memcmp(const s1, s2: Pointer; n: Integer): Integer; cdecl; external 'msvcrt.dll' name 'memcmp';
 
+{$WARN UNSAFE_CAST OFF}
+
 function _fread(ptr: Pointer; size, nelem: Integer; stream: Pointer): Integer; cdecl;
 begin
   Result := TStream(stream).Read(ptr^, size * nelem) div size;
@@ -1612,6 +1533,8 @@ begin
     Result := 0;
   end;
 end;
+
+{$WARN UNSAFE_CAST ON}
 
 procedure __assert(const __cond, __file: PAnsiChar; __line: Integer);
 begin

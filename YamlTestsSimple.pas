@@ -9,10 +9,17 @@ uses
 implementation
 
 type
-  TYamlParseTests = class(TTestCase)
+  TYamlTests = class(TTestCase)
   protected
-    FString: UTF8String;
     FEventParser: IYamlEventParser;
+    FEvent: IYamlEvent;
+    class function EventTypeToString(AEventType: TYamlEventType): string;
+    procedure CheckEvent(AEventType: TYamlEventType); overload;
+    procedure CheckEvent(const AScalarValue: YamlString); overload;
+  end;
+
+  TYamlParseTests = class(TYamlTests)
+    FString: UTF8String;
     procedure SetUp; override;
   published
     procedure TestParse;
@@ -36,24 +43,59 @@ begin
 end;
 
 procedure TYamlParseTests.TestParse;
-var
-  Event: IYamlEvent;
 begin
-  while FEventParser.Next(Event) do
-  begin
-    case Event.EventType of
-      yamlNoEvent: Write('NoEvent'#9);
-      yamlStreamStartEvent: Write('StreamStart'#9);
-      yamlStreamEndEvent: Write('StreamEnd'#9);
-      yamlDocumentStartEvent: Write('DocumentStart'#9);
-      yamlDocumentEndEvent: Write('DocumentEnd'#9);
-      yamlAliasEvent: Write('Alias'#9);
-      yamlScalarEvent: Write('Scalar(' + Event.ScalarValue + ')'#9);
-      yamlSequenceStartEvent: Write('SequenceStart'#9);
-      yamlSequenceEndEvent: Write('SequenceEnd'#9);
-      yamlMappingStartEvent: Write('MappingStart'#9);
-      yamlMappingEndEvent: Write('MappingEnd'#9);
-    end;
+  CheckEvent(yamlStreamStartEvent);
+    CheckEvent(yamlDocumentStartEvent);
+      CheckEvent(yamlMappingStartEvent);
+        CheckEvent('testdict');
+          CheckEvent(yamlSequenceStartEvent);
+            CheckEvent('2');
+            CheckEvent('');
+            CheckEvent(yamlSequenceStartEvent);
+              CheckEvent('4');
+              CheckEvent('true');
+            CheckEvent(yamlSequenceEndEvent);
+          CheckEvent(yamlSequenceEndEvent);
+        CheckEvent('another key');
+          CheckEvent('abc');
+      CheckEvent(yamlMappingEndEvent);
+    CheckEvent(yamlDocumentEndEvent);
+  CheckEvent(yamlStreamEndEvent);
+  CheckFalse(FEventParser.Next(FEvent));
+end;
+
+{ TYamlTests }
+
+procedure TYamlTests.CheckEvent(AEventType: TYamlEventType);
+begin
+  CheckTrue(FEventParser.Next(FEvent), 'YamlParser.Next');
+  CheckEquals(EventTypeToString(AEventType),
+    EventTypeToString(FEvent.EventType), 'Event.EventType');
+end;
+
+procedure TYamlTests.CheckEvent(const AScalarValue: YamlString);
+begin
+  CheckTrue(FEventParser.Next(FEvent), 'YamlParser.Next');
+  CheckEquals(EventTypeToString(yamlScalarEvent),
+    EventTypeToString(FEvent.EventType), 'Event.EventType');
+  CheckEquals(AScalarValue, FEvent.ScalarValue, 'Event.ScalarValue');
+end;
+
+class function TYamlTests.EventTypeToString(
+  AEventType: TYamlEventType): string;
+begin
+  case AEventType of
+    yamlNoEvent: Result := 'NoEvent';
+    yamlStreamStartEvent: Result := 'StreamStart';
+    yamlStreamEndEvent: Result := 'StreamEnd';
+    yamlDocumentStartEvent: Result := 'DocumentStart';
+    yamlDocumentEndEvent: Result := 'DocumentEnd';
+    yamlAliasEvent: Result := 'Alias';
+    yamlScalarEvent: Result := 'Scalar';
+    yamlSequenceStartEvent: Result := 'SequenceStart';
+    yamlSequenceEndEvent: Result := 'SequenceEnd';
+    yamlMappingStartEvent: Result := 'MappingStart';
+    yamlMappingEndEvent: Result := 'MappingEnd';
   end;
 end;
 
