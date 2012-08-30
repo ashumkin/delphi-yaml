@@ -5,6 +5,7 @@ interface
 implementation
 
 uses
-  YamlTestsSimple;
+  YamlTestsSimple,
+  YamlTestsThick;
 
 end.

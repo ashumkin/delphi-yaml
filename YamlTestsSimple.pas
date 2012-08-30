@@ -34,7 +34,8 @@ type
 procedure TYamlParseTests.SetUp;
 begin
   inherited;
-  FString := 'testdict:'#13#10 +
+  FString :=
+    'testdict:'#13#10 +
     '  - 2'#13#10 +
     '  -'#13#10 +
     '  - ["4", true]'#13#10 +

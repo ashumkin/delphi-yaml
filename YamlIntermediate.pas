@@ -1,5 +1,5 @@
 (**
- * @file yaml.pas
+ * @file YamlIntermediate.pas
  * @brief Intermediate binding to libyaml
  *)
 
@@ -11,7 +11,10 @@ interface
 uses
   SysUtils, Classes, Types, YamlThin, YamlDelphiFeatures;
 
-  {$INCLUDE 'YamlDelphiFeatures.inc'}
+{$INCLUDE 'YamlDelphiFeatures.inc'}
+
+{$WARN UNSAFE_TYPE OFF} // PAnsiChar, PWideChar, untyped
+{$WARN UNSAFE_CODE OFF} // @
 
 type
   (**
@@ -1512,6 +1515,9 @@ type
 
 implementation
 
+uses
+  WideStrUtils;
+
 type
   TYamlVersionImpl = class(TInterfacedObject, IYamlVersion)
   public
@@ -2928,17 +2934,9 @@ end;
 class function YamlInput.Create(Input: PWideChar; SizeInWideChars: Integer = -1; Copy: Boolean = True;
   Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput;
 begin
-  if Copy then
-  begin
-    if SizeInWideChars = -1 then
-      Result := Create(WideString(Input), Encoding)
-    else
-      Result := Create(Input^, SizeInWideChars * 2, True, Encoding);
-  end else begin
-    if SizeInWideChars = -1 then
-      SizeInWideChars := Length(WideString(Input));
-    Result := Create(Input^, SizeInWideChars * 2, False, Encoding);
-  end;
+  if SizeInWideChars < 0 then
+    SizeInWideChars := WStrLen(Input);
+  Result := Create(Input^, SizeInWideChars * 2, Copy, Encoding);
 end;
 
 class function YamlInput.Create(const Input: TByteDynArray;
