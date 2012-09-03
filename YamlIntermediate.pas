@@ -9,9 +9,9 @@ unit YamlIntermediate;
 interface
 
 uses
-  SysUtils, Classes, Types, YamlThin, YamlDelphiFeatures;
+  SysUtils, Classes, Types, YamlThin, CVariantDelphiFeatures;
 
-{$INCLUDE 'YamlDelphiFeatures.inc'}
+{$INCLUDE 'CVariantDelphiFeatures.inc'}
 
 {$WARN UNSAFE_TYPE OFF} // PAnsiChar, PWideChar, untyped
 {$WARN UNSAFE_CODE OFF} // @
