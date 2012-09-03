@@ -17,12 +17,12 @@ uses
 {$WARN UNSAFE_TYPE OFF} // CVariant
 {$ENDIF}
 
-
 function LoadYaml(const S: Utf8String): CVariant;
+function DumpYaml(const Obj: CVariant): UTF8String;
 
 implementation
 
-uses Math;
+uses Math, StrUtils;
 
 function MatchStringSet(const S: YamlString; const SSet: array of YamlString): Boolean;
 var
@@ -478,6 +478,83 @@ begin
   Parser := YamlEventParser.Create(YamlInput.Create(S));
   if Parser.Next(Event) then
     Result := FromYamlInternal(Parser, Event);
+end;
+
+function FloatToStrInternal(AValue: Double): string;
+var
+  fs: TFormatSettings;
+begin
+  if IsNan(AValue) then
+    Result := '.nan'
+  else if IsInfinite(AValue) then
+  begin
+    if Sign(AValue) > 0 then
+      Result := '.inf'
+    else
+      Result := '-.inf';
+  end else
+  begin
+    GetLocaleFormatSettings($0409, fs);
+    Result := FloatToStr(AValue, fs);
+    if Pos('.', Result) = 0 then
+    begin
+      if Pos('e', Result) = 0 then
+
+    end;
+  end;
+end;
+
+procedure DumpYamlInternal(const Emitter: IYamlEventEmitter; const Obj: CVariant);
+var
+  Event: IYamlEvent;
+begin
+  case Obj.VType of
+    vtEmpty, vtNull:
+    begin
+      Event := YamlEventScalar.Create('', '', 'null', True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtBoolean:
+    begin
+      Event := YamlEventScalar.Create('', '', IfThen(Obj.ToBool, 'true', 'false'), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtInteger:
+    begin
+      Event := YamlEventScalar.Create('', '', IntToStr(Obj.ToInt), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtExtended:
+    begin
+      Event := YamlEventScalar.Create('', '', FloatToStrF(Obj.ToDouble), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+  end;
+end;
+
+function DumpYaml(const Obj: CVariant): UTF8String;
+var
+  OS: TStringStream;
+  Emitter: IYamlEventEmitter;
+  Event: IYamlEvent;
+begin
+  OS := OS.Create('');
+  try
+    Emitter := YamlEventEmitter.Create(YamlOutput.Create(OS, yamlUtf8Encoding));
+    Event := YamlEventStreamStart.Create(yamlUtf8Encoding);
+    Emitter.Emit(Event);
+    Event := YamlEventDocumentStart.Create(nil, [], True);
+    Emitter.Emit(Event);
+
+    DumpYamlInternal(Emitter, Obj);
+
+    Event := YamlEventDocumentEnd.Create(True);
+    Emitter.Emit(Event);
+    Event := YamlEventStreamEnd.Create;
+    Emitter.Emit(Event);
+  finally
+    FreeAndNil(OS);
+  end;
 end;
 
 end.
