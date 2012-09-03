@@ -186,6 +186,13 @@ begin
 end;
 
 function TryYamlScalarToFloat(const S: YamlString; var R: CVariant): Boolean;
+var
+  i, j, k, L: Integer;
+  m, n: Integer;
+  IntRes: Double;
+  Expo: Integer;
+  C, D: WideChar;
+  Digits: Integer;
 begin
   Result := False; R.Destroy;
   if MatchStringSet(S, ['.inf', '.Inf', '.INF', '+.inf', '+.Inf', '+.INF']) then
@@ -206,7 +213,182 @@ begin
     Result := True;
     Exit;
   end;
-  // TODO: float parse :(
+
+  L := Length(S);
+  if L = 0 then Exit;
+  i := 1;
+  case S[1] of
+  '+', '-': Inc(i);
+  end;
+  IntRes := 0.0; Digits := 0;
+  if i > L then Exit;
+  for j := i to L do
+  begin
+    C := S[j];
+    case C of
+    '0' .. '9': IntRes := IntRes * 10 + (Ord(C) - $30);
+    '_': if j = i then Exit;
+    '.':
+      begin
+        for k := j + 1 to L do
+        begin
+          C := S[k];
+          case C of
+          '0' .. '9': begin IntRes := IntRes * 10 + (Ord(C) - $30); Inc(Digits); end;
+          '_': ;
+          'e', 'E':
+            begin
+              // exponential
+              if k + 1 > L then Exit;
+              m := k + 1;
+              case S[m] of
+              '+', '-': Inc(m);
+              end;
+              Expo := 0;
+              if m > L then Exit;
+              for n := m to L do
+              begin
+                C := S[n];
+                case C of
+                '0' .. '9': Expo := Expo * 10 + (Ord(C) - $30);
+                else
+                  Exit;
+                end;
+              end;
+
+              if S[k + 1] <> '-' then
+                Dec(Digits, Expo)
+              else
+                Inc(Digits, Expo);
+
+              if Digits < 0 then
+              begin
+                if S[1] <> '-' then
+                  R.Create(IntRes * IntPower(0.1, Digits))
+                else
+                  R.Create(-IntRes * IntPower(0.1, Digits));
+              end else if Digits > 0 then
+              begin
+                if S[1] <> '-' then
+                  R.Create(IntRes * IntPower(10.0, -Digits))
+                else
+                  R.Create(-IntRes * IntPower(10.0, -Digits));
+              end else begin
+                if S[1] <> '-' then
+                  R.Create(IntRes)
+                else
+                  R.Create(-IntRes);
+              end;
+
+              Result := True;
+              Exit;
+            end;
+          end;
+        end;
+
+        if Digits < 0 then
+        begin
+          if S[1] <> '-' then
+            R.Create(IntRes * IntPower(0.1, Digits))
+          else
+            R.Create(-IntRes * IntPower(0.1, Digits));
+        end else begin
+          if S[1] <> '-' then
+            R.Create(IntRes)
+          else
+            R.Create(-IntRes);
+        end;
+        Result := True;
+        Exit;
+      end;
+    ':':
+      begin
+        k := j;
+        while k <= L do
+        begin
+          if k + 1 > L then Exit;
+          C := S[k + 1];
+          case C of
+          '0' .. '5':
+            begin
+              if k + 2 > L then Exit;
+              D := S[k + 2];
+              case D of
+              '0' .. '9':
+                begin
+                  IntRes := IntRes * 60 + (Ord(C) - $30) * 10 + (Ord(D) - $30);
+                  Inc(k, 3);
+                  if k > L then Exit;
+                  case S[k] of
+                  ':': ;
+                  '.': Break;
+                  else
+                    Exit;
+                  end;
+                end;
+              ':':
+                begin
+                  IntRes := IntRes * 60 + (Ord(C) - $30);
+                  Inc(k, 2);
+                end;
+              '.':
+                begin
+                  IntRes := IntRes * 60 + (Ord(C) - $30);
+                  Inc(k, 2);
+                  Break;
+                end;
+              else
+                Exit;
+              end;
+            end;
+          '6' .. '9':
+            begin
+              IntRes := IntRes * 60 + (Ord(C) - $30);
+              Inc(k, 2);
+              if k > L then Exit;
+              case S[k] of
+              ':': ;
+              '.': Break;
+              else
+                Exit;
+              end;
+            end;
+          else
+            Exit;
+          end;
+        end;
+
+        for m := k + 1 to L do
+        begin
+          C := S[m];
+          case C of
+            '0' .. '9': begin IntRes := IntRes * 10 + (Ord(C) - $30); Inc(Digits); end;
+            '_': ;
+          else
+            Exit;
+          end;
+        end;
+
+        if Digits < 0 then
+        begin
+          if S[1] <> '-' then
+            R.Create(IntRes * IntPower(0.1, Digits))
+          else
+            R.Create(-IntRes * IntPower(0.1, Digits));
+        end else begin
+          if S[1] <> '-' then
+            R.Create(IntRes)
+          else
+            R.Create(-IntRes);
+        end;
+        Result := True;
+        Exit;
+      end;
+    else
+      Exit;
+    end;
+  end;
+  // dot not found, failure
 end;
 
 function ResolvePlainScalar(const S: YamlString): CVariant;
@@ -226,7 +408,10 @@ begin
     // parsed by Result.Destroy :)
   else if TryYamlScalarToInt(S, Result) then
     // parsed
-  else if TryYaml then
+  else if TryYamlScalarToFloat(S, Result) then
+    // parsed
+  else // TODO: timestamp
+    Result.Create(S);
 end;
 
 // we pass Event because there is no way to peek next event
