@@ -18,7 +18,7 @@ uses
 {$ENDIF}
 
 
-function FromYaml(const S: UTF8String): CVariant;
+function LoadYaml(const S: Utf8String): CVariant;
 
 implementation
 
@@ -461,12 +461,15 @@ begin
   end;
   yamlScalarEvent:
   begin
-    // TODO: recognize scalars
+    if Event.ScalarPlainImplicit then
+      Result := ResolvePlainScalar(Event.ScalarValue)
+    else
+      Result.Create(Event.ScalarValue);
   end;
   end;
 end;
 
-function FromYaml(const S: UTF8String): CVariant;
+function LoadYaml(const S: Utf8String): CVariant;
 var
   Parser: IYamlEventParser;
   Event: IYamlEvent;
