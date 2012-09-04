@@ -1434,6 +1434,9 @@ function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
 implementation
 
+uses
+  Windows;
+
 //-//-//-//-//-//-//-//-//
 
 {$WARN UNSAFE_CODE OFF}
@@ -1464,6 +1467,7 @@ begin
     on EOutOfMemory do
       Result := nil;
   end;
+  // OutputDebugString(PChar('Malloc: $' + IntToHex(Integer(Result), 8) + '(' + IntToStr(Size) + ')'));
 end;
 
 function _realloc(P: Pointer; Size: Integer): Pointer; cdecl;
@@ -1475,11 +1479,13 @@ begin
     on EOutOfMemory do
       Result := nil;
   end;
+  // OutputDebugString(PChar('Realloc: $' + IntToHex(Integer(Result), 8) + '(' + IntToStr(Size) + ')'));
 end;
 
 procedure _free(Block: Pointer); cdecl;
 begin
   FreeMem(Block);
+  // OutputDebugString(PChar('Free: $' + IntToHex(Integer(Block), 8)));
 end;
 
 function _strdup(const s1 : PAnsiChar) : PAnsiChar; cdecl;
@@ -1493,6 +1499,7 @@ begin
     L := StrLen(s1);
     GetMem(Result, L + 1);
     Move(s1^, Result^, L + 1);
+    // OutputDebugString(PChar('Strdup: $' + IntToHex(Integer(Result), 8) + '(' + IntToStr(L + 1) + ')'));
   end;
 end;
 
@@ -1541,7 +1548,7 @@ begin
   if Assigned(AssertErrorProc) then
     AssertErrorProc(__cond, __file, __line, Pointer(-1))
   else
-    Error(reAssertionFailed);  // loses return address
+    System.Error(reAssertionFailed);  // loses return address
 end;
 
 //-//-//-//-//-//-//-//-//-//

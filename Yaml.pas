@@ -637,7 +637,7 @@ var
   Emitter: IYamlEventEmitter;
   Event: IYamlEvent;
 begin
-  OS := OS.Create('');
+  OS := TStringStream.Create('');
   try
     Emitter := YamlEventEmitter.Create(YamlOutput.Create(OS, yamlUtf8Encoding));
     Event := YamlEventStreamStart.Create(yamlUtf8Encoding);
@@ -651,6 +651,8 @@ begin
     Emitter.Emit(Event);
     Event := YamlEventStreamEnd.Create;
     Emitter.Emit(Event);
+    Emitter.Flush;
+    Result := OS.DataString;
   finally
     FreeAndNil(OS);
   end;

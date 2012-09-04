@@ -3566,8 +3566,14 @@ begin
     if not Supports(Event, IYamlEventImpl, EventAsIYamlEventImpl) then
       raise ERangeError.Create('YamlEventEmitter.Emit: Event is not created by YamlIntermediate');
     EventPtr := EventAsIYamlEventImpl.YamlEvent;
-    if _yaml_emitter_emit(FEmitter, EventPtr) = 0 then
-      RaiseYamlException;
+    try
+      if _yaml_emitter_emit(FEmitter, EventPtr) = 0 then
+        RaiseYamlException;
+    finally
+      FillChar(EventPtr^, SizeOf(TYamlEvent), 0);
+      // emit effectively acquires event but does not
+      // clean the original object
+    end;
   finally
     Event := nil;
     // The event object is destroyed even if the function fails.
@@ -3648,8 +3654,12 @@ begin
     if not Supports(Document, IYamlDocumentImpl, DocumentAsIYamlDocumentImpl) then
       raise ERangeError.Create('YamlDocumentEmitter.Dump: Document is not created by YamlIntermediate');
     DocumentPtr := DocumentAsIYamlDocumentImpl.YamlDocument;
-    if _yaml_emitter_dump(FEmitter, DocumentPtr) = 0 then
-      RaiseYamlException;
+    try
+      if _yaml_emitter_dump(FEmitter, DocumentPtr) = 0 then
+        RaiseYamlException;
+    finally
+      FillChar(DocumentPtr^, SizeOf(TYamlDocumentImpl), 0);
+    end;
   finally
     Document := nil; // see above TYamlEventEmitter.Emit
   end;

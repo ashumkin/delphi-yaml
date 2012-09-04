@@ -13,13 +13,36 @@ type
   published
     procedure TestParse;
     procedure TestParseAdvanced;
+    procedure TestDump;
   end;
 
 { TYamlTestsThick }
 
+procedure TYamlTestsThick.TestDump;
+begin
+  CheckEquals(
+    'testdict: '#13#10 +
+    '  - 2'#13#10 +
+    '  - null'#13#10 +
+    '  -'#13#10 +
+    '    - "4"'#13#10 +
+    '    - true'#13#10 +
+    'another key: "abc"'#13#10,
+    DumpYaml(CMap([
+      'testdict',
+        VList([
+          2,
+          nil,
+          VList(['4', True])
+        ]),
+      'another key', 'abc'
+    ]))
+  );
+end;
+
 procedure TYamlTestsThick.TestParse;
 begin
-  CheckTrue(
+  Check(
     LoadYaml(
       'testdict:'#13#10 +
       '  - 2'#13#10 +
