@@ -39,15 +39,15 @@ end;
 
 const
   yamlNullValues:  array[0 .. 4] of UnicodeString =
-    ['~', 'null', 'Null', 'NULL', ''];
+    ('~', 'null', 'Null', 'NULL', '');
   yamlTrueValues:  array[0 .. 10] of UnicodeString =
-    ['y', 'Y', 'yes', 'Yes', 'YES', 'true',  'True',  'TRUE',  'on',  'On',  'ON'];
+    ('y', 'Y', 'yes', 'Yes', 'YES', 'true',  'True',  'TRUE',  'on',  'On',  'ON');
   yamlFalseValues: array[0 .. 10] of UnicodeString =
-    ['n', 'N', 'no',  'No',  'NO',  'false', 'False', 'FALSE', 'off', 'Off', 'OFF'];
+    ('n', 'N', 'no',  'No',  'NO',  'false', 'False', 'FALSE', 'off', 'Off', 'OFF');
   yamlInfValues:   array[0 .. 5] of UnicodeString =
-    ['.inf', '.Inf', '.INF', '+.inf', '+.Inf', '+.INF'];
-  yamlNInfValues:  array[0 .. 2] of UnicodeString = ['-.inf', '-.Inf', '-.INF'];
-  yamlNaNValues:   array[0 .. 2] of UnicodeString = ['.nan', '.NaN', '.NAN'];
+    ('.inf', '.Inf', '.INF', '+.inf', '+.Inf', '+.INF');
+  yamlNInfValues:  array[0 .. 2] of UnicodeString = ('-.inf', '-.Inf', '-.INF');
+  yamlNaNValues:   array[0 .. 2] of UnicodeString = ('.nan', '.NaN', '.NAN');
 
 function TryYamlScalarToInt(const S: YamlString; var R: CVariant): Boolean;
 var
@@ -528,9 +528,10 @@ begin
     Result := FromYamlInternal(Parser, Event);
 end;
 
-function FloatToStrInternal(AValue: Double): string;
+function FloatToStrInternal(AValue: Double): UnicodeString;
 var
   fs: TFormatSettings;
+  epos: Integer;
 begin
   if IsNan(AValue) then
     Result := '.nan'
@@ -542,12 +543,29 @@ begin
       Result := '-.inf';
   end else
   begin
-    GetLocaleFormatSettings($0409, fs);
+    fs.DecimalSeparator := '.';
     Result := FloatToStr(AValue, fs);
+    epos := Pos('E', Result);
     if Pos('.', Result) = 0 then
     begin
-      if Pos('e', Result) = 0 then
-
+      if epos = 0 then
+        Result := Result + '.0'
+      else
+      begin
+        {$WARN UNSAFE_CODE OFF}
+        Result[epos] := 'e';
+        {$WARN UNSAFE_CODE ON}
+        case Result[epos + 1] of '+', '-': ; else Insert('+', Result, epos + 1); end;
+        Insert('.0', Result, epos);
+      end;
+    end else begin
+      if epos <> 0 then
+      begin
+        {$WARN UNSAFE_CODE OFF}
+        Result[epos] := 'e';
+        {$WARN UNSAFE_CODE ON}
+        case Result[epos + 1] of '+', '-': ; else Insert('+', Result, epos + 1); end;
+      end;
     end;
   end;
 end;
@@ -555,6 +573,8 @@ end;
 procedure DumpYamlInternal(const Emitter: IYamlEventEmitter; const Obj: CVariant);
 var
   Event: IYamlEvent;
+  LI: CListIterator;
+  MI: CMapIterator;
 begin
   case Obj.VType of
     vtEmpty, vtNull:
@@ -574,7 +594,38 @@ begin
     end;
     vtExtended:
     begin
-      Event := YamlEventScalar.Create('', '', FloatToStrF(Obj.ToDouble), True, False, yamlPlainScalarStyle);
+      Event := YamlEventScalar.Create('', '', FloatToStrInternal(Obj.ToFloat), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtString:
+    begin
+      Event := YamlEventScalar.Create('', '', Obj.ToString, False, True, yamlDoubleQuotedScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtList:
+    begin
+      Event := YamlEventSequenceStart.Create('', '', True, yamlBlockSequenceStyle);
+      Emitter.Emit(Event);
+      LI.Create(Obj);
+      while LI.Next do
+        DumpYamlInternal(Emitter, LI.Value);
+      LI.Destroy;
+      Event := YamlEventSequenceEnd.Create;
+      Emitter.Emit(Event);
+    end;
+    vtMap:
+    begin
+      Event := YamlEventMappingStart.Create('', '', True, yamlBlockMappingStyle);
+      Emitter.Emit(Event);
+      MI.Create(Obj);
+      while MI.Next do
+      begin
+        Event := YamlEventScalar.Create('', '', MI.Key, True, True, yamlAnyScalarStyle);
+        Emitter.Emit(Event);
+        DumpYamlInternal(Emitter, MI.Value);
+      end;
+      MI.Destroy;
+      Event := YamlEventMappingEnd.Create;
       Emitter.Emit(Event);
     end;
   end;
