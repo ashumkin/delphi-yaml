@@ -37,6 +37,18 @@ begin
     end;
 end;
 
+const
+  yamlNullValues:  array[0 .. 4] of UnicodeString =
+    ['~', 'null', 'Null', 'NULL', ''];
+  yamlTrueValues:  array[0 .. 10] of UnicodeString =
+    ['y', 'Y', 'yes', 'Yes', 'YES', 'true',  'True',  'TRUE',  'on',  'On',  'ON'];
+  yamlFalseValues: array[0 .. 10] of UnicodeString =
+    ['n', 'N', 'no',  'No',  'NO',  'false', 'False', 'FALSE', 'off', 'Off', 'OFF'];
+  yamlInfValues:   array[0 .. 5] of UnicodeString =
+    ['.inf', '.Inf', '.INF', '+.inf', '+.Inf', '+.INF'];
+  yamlNInfValues:  array[0 .. 2] of UnicodeString = ['-.inf', '-.Inf', '-.INF'];
+  yamlNaNValues:   array[0 .. 2] of UnicodeString = ['.nan', '.NaN', '.NAN'];
+
 function TryYamlScalarToInt(const S: YamlString; var R: CVariant): Boolean;
 var
   i, j, k, L: Integer;
@@ -195,19 +207,19 @@ var
   Digits: Integer;
 begin
   Result := False; R.Destroy;
-  if MatchStringSet(S, ['.inf', '.Inf', '.INF', '+.inf', '+.Inf', '+.INF']) then
+  if MatchStringSet(S, yamlInfValues) then
   begin
     R.Create(Math.Infinity);
     Result := True;
     Exit;
   end;
-  if MatchStringSet(S, ['-.inf', '-.Inf', '-.INF']) then
+  if MatchStringSet(S, yamlNInfValues) then
   begin
     R.Create(Math.NegInfinity);
     Result := True;
     Exit;
   end;
-  if MatchStringSet(S, ['.nan', '.NaN', '.NAN']) then
+  if MatchStringSet(S, yamlNaNValues) then
   begin
     R.Create(Math.NaN);
     Result := True;
@@ -394,17 +406,11 @@ end;
 function ResolvePlainScalar(const S: YamlString): CVariant;
 begin
   Result.Destroy;
-  if MatchStringSet(S,
-    ['y', 'Y', 'yes', 'Yes', 'YES',
-     'true', 'True', 'TRUE',
-     'on', 'On', 'ON']) then
+  if MatchStringSet(S, yamlTrueValues) then
     Result.Create(True)
-  else if MatchStringSet(S,
-    ['n', 'N', 'no', 'No', 'NO',
-     'false', 'False', 'FALSE',
-     'off', 'Off', 'OFF']) then
+  else if MatchStringSet(S, yamlFalseValues) then
     Result.Create(False)
-  else if MatchStringSet(S, ['~', 'null', 'Null', 'NULL', '']) then
+  else if MatchStringSet(S, yamlNullValues) then
     // parsed by Result.Destroy :)
   else if TryYamlScalarToInt(S, Result) then
     // parsed
@@ -461,11 +467,53 @@ begin
   end;
   yamlScalarEvent:
   begin
-    if Event.ScalarPlainImplicit then
-      Result := ResolvePlainScalar(Event.ScalarValue)
-    else
+    Key := Event.ScalarTag;
+    if Key = '' then
+    begin
+      if Event.ScalarPlainImplicit then
+        Result := ResolvePlainScalar(Event.ScalarValue)
+      else
+        Result.Create(Event.ScalarValue);
+    end
+    else if Key = yamlNullTag then
+    begin
+      if MatchStringSet(Event.ScalarValue, yamlNullValues) then
+      // parsed by Result.Destroy
+      else
+        raise EYamlConstructorError.Create('', nil, 'Invalid !!null value: ' + Event.ScalarValue, Event.StartMark);
+    end
+    else if Key = yamlBoolTag then
+    begin
+      if MatchStringSet(Event.ScalarValue, yamlTrueValues) then
+        Result.Create(True)
+      else if MatchStringSet(Event.ScalarValue, yamlFalseValues) then
+        Result.Create(False)
+      else
+        raise EYamlConstructorError.Create('', nil, 'Invalid !!bool value: ' + Event.ScalarValue, Event.StartMark);
+    end
+    else if Key = yamlIntTag then
+    begin
+      if TryYamlScalarToInt(Event.ScalarValue, Result) then
+        // parsed
+      else
+        raise EYamlConstructorError.Create('', nil, 'Invalid !!int value: ' + Event.ScalarValue, Event.StartMark);
+    end
+    else if Key = yamlFloatTag then
+    begin
+      if TryYamlScalarToFloat(Event.ScalarValue, Result) then
+        // parsed
+      else
+        raise EYamlConstructorError.Create('', nil, 'Invalid !!float value: ' + Event.ScalarValue, Event.StartMark);
+    end
+    else if Key = yamlStrTag then
+    begin
       Result.Create(Event.ScalarValue);
+    end
+    else
+      raise EYamlConstructorError.Create('', nil, 'Tag is not supported: ' + Key, Event.StartMark);
   end;
+  yamlAliasEvent:
+    raise EYamlConstructorError.Create('', nil, 'Aliases are not supported', Event.StartMark);
   end;
 end;
 

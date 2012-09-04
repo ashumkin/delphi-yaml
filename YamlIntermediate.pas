@@ -179,6 +179,19 @@ type
     property Problem: YamlString read FProblem;
     property ProblemMark: IYamlMark read FProblemMark;
   end;
+  (** Cannot construct a native data structure. *)
+  EYamlConstructorError = class(EYamlError)
+  protected
+    FContext, FProblem: YamlString;
+    FContextMark, FProblemMark: IYamlMark;
+  public
+    constructor Create(const Context: YamlString; const ContextMark: IYamlMark;
+      const Problem: YamlString; const ProblemMark: IYamlMark);
+    property Context: YamlString read FContext;
+    property ContextMark: IYamlMark read FContextMark;
+    property Problem: YamlString read FProblem;
+    property ProblemMark: IYamlMark read FProblemMark;
+  end;
 
   (** Cannot write to the output stream. *)
   EYamlWriterError = class(EYamlError)
@@ -190,6 +203,14 @@ type
   end;
   (** Cannot emit a YAML stream. *)
   EYamlEmitterError = class(EYamlError)
+  protected
+    FProblem: YamlString;
+  public
+    constructor Create(const Problem: YamlString);
+    property Problem: YamlString read FProblem;
+  end;
+  (** Cannot represent native data structure. *)
+  EYamlRepresenterError = class(EYamlError)
   protected
     FProblem: YamlString;
   public
@@ -1717,6 +1738,23 @@ begin
   FProblemMark := ProblemMark;
 end;
 
+constructor EYamlConstructorError.Create(const Context: YamlString; const ContextMark: IYamlMark;
+  const Problem: YamlString; const ProblemMark: IYamlMark);
+begin
+  if Context <> '' then
+    inherited CreateFmt('Constructor error: %s at line %d, column %d'#13#10 +
+      '%s at line %d, column %d',
+      [Context, ContextMark.Line + 1, ContextMark.Column + 1,
+        Problem, ProblemMark.Line + 1, ProblemMark.Column + 1])
+  else
+    inherited CreateFmt('Constructor error: %s at line %d, column %d',
+      [Problem, ProblemMark.Line + 1, ProblemMark.Column + 1]);
+  FContext := Context;
+  FContextMark := ContextMark;
+  FProblem := Problem;
+  FProblemMark := ProblemMark;
+end;
+
 constructor EYamlWriterError.Create(const Problem: YamlString);
 begin
   inherited CreateFmt('Writer error: %s', [Problem]);
@@ -1726,6 +1764,12 @@ end;
 constructor EYamlEmitterError.Create(const Problem: YamlString);
 begin
   inherited CreateFmt('Emitter error: %s', [Problem]);
+  FProblem := Problem;
+end;
+
+constructor EYamlRepresenterError.Create(const Problem: YamlString);
+begin
+  inherited CreateFmt('Representer error: %s', [Problem]);
   FProblem := Problem;
 end;
 
