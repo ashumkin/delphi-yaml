@@ -3658,7 +3658,7 @@ begin
       if _yaml_emitter_dump(FEmitter, DocumentPtr) = 0 then
         RaiseYamlException;
     finally
-      FillChar(DocumentPtr^, SizeOf(TYamlDocumentImpl), 0);
+      FillChar(DocumentPtr^, SizeOf(TYamlDocument), 0);
     end;
   finally
     Document := nil; // see above TYamlEventEmitter.Emit
