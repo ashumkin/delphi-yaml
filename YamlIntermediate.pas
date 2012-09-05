@@ -1537,7 +1537,11 @@ type
 implementation
 
 uses
-  WideStrUtils;
+  WideStrUtils; // WStrLen
+
+// TODO: Document subnodes: array of interface -> interface
+// TODO: ScalarAnchor, MappingAnchor, ... -> Anchor
+
 
 type
   TYamlVersionImpl = class(TInterfacedObject, IYamlVersion)
@@ -2306,7 +2310,7 @@ begin
   InternalTag := UTF8Encode(Tag);
   InternalValue := UTF8Encode(Value);
   if _yaml_scalar_event_initialize(NewEvent^,
-    PYamlChar(InternalAnchor), PYamlChar(InternalTag),
+    PYamlChar(Pointer(InternalAnchor)), PYamlChar(Pointer(InternalTag)),
     PYamlChar(InternalValue), Length(InternalValue),
     Integer(PlainImplicit), Integer(QuotedImplicit),
     Style) = 0 then
@@ -2323,7 +2327,7 @@ begin
   InternalAnchor := UTF8Encode(Anchor);
   InternalTag := UTF8Encode(Tag);
   if _yaml_sequence_start_event_initialize(NewEvent^,
-    PYamlChar(InternalAnchor), PYamlChar(InternalTag),
+    PYamlChar(Pointer(InternalAnchor)), PYamlChar(Pointer(InternalTag)),
     Integer(Implicit), Style) = 0 then
     raise EYamlMemoryError.Create('YamlEventSequenceStart.Create: out of memory');
 end;
@@ -2347,7 +2351,7 @@ begin
   InternalAnchor := UTF8Encode(Anchor);
   InternalTag := UTF8Encode(Tag);
   if _yaml_mapping_start_event_initialize(NewEvent^,
-    PYamlChar(InternalAnchor), PYamlChar(InternalTag),
+    PYamlChar(Pointer(InternalAnchor)), PYamlChar(Pointer(InternalTag)),
     Integer(Implicit), Style) = 0 then
     raise EYamlMemoryError.Create('YamlEventMappingStart.Create: out of memory');
 end;

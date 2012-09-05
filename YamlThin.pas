@@ -1434,8 +1434,8 @@ function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
 implementation
 
-uses
-  Windows;
+// uses
+//   Windows; // OutputDebugString
 
 //-//-//-//-//-//-//-//-//
 
