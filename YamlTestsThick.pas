@@ -11,24 +11,17 @@ implementation
 type
   TYamlTestsThick = class(TTestCase)
   published
-    procedure TestParse;
-    procedure TestParseAdvanced;
-    procedure TestDump;
+    procedure TestLoad;
+    procedure TestLoadAdvanced;
+    procedure TestDumpAndLoad;
   end;
 
 { TYamlTestsThick }
 
-procedure TYamlTestsThick.TestDump;
+procedure TYamlTestsThick.TestDumpAndLoad;
 begin
-  CheckEquals(
-    'testdict: '#13#10 +
-    '  - 2'#13#10 +
-    '  - null'#13#10 +
-    '  -'#13#10 +
-    '    - "4"'#13#10 +
-    '    - true'#13#10 +
-    'another key: "abc"'#13#10,
-    DumpYaml(CMap([
+  Check(
+    LoadYaml(DumpYaml(CMap([
       'testdict',
         VList([
           2,
@@ -36,11 +29,18 @@ begin
           VList(['4', True])
         ]),
       'another key', 'abc'
-    ]))
-  );
+    ]))).Equals(CMap([
+      'testdict',
+        VList([
+          2,
+          nil,
+          VList(['4', True])
+        ]),
+      'another key', 'abc'
+    ])), 'dump -> load -> equals test');
 end;
 
-procedure TYamlTestsThick.TestParse;
+procedure TYamlTestsThick.TestLoad;
 begin
   Check(
     LoadYaml(
@@ -63,7 +63,7 @@ begin
   );
 end;
 
-procedure TYamlTestsThick.TestParseAdvanced;
+procedure TYamlTestsThick.TestLoadAdvanced;
 begin
   CheckTrue(
     LoadYaml(
