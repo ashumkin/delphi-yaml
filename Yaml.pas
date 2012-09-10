@@ -22,7 +22,7 @@ function DumpYaml(const Obj: CVariant): UTF8String;
 
 implementation
 
-uses Math, StrUtils;
+uses Math, StrUtils, Windows, DateUtils;
 
 function MatchStringSet(const S: YamlString; const SSet: array of YamlString): Boolean;
 var
@@ -401,6 +401,427 @@ begin
     end;
   end;
   // dot not found, failure
+end;
+
+function TryYamlScalarToTDateTime(const S: YamlString; var R: CVariant): Boolean;
+var
+  i, L: Integer;
+  Year, Month, Day, Hour, Min, Sec, MSec, ZoneMin: Integer;
+  GlobalTime: TSystemTime;
+  LocalTime: TSystemTime;
+  C, D, E, F: WideChar;
+begin
+  Result := False;
+  Year := 0; Month := 0; Day := 0;
+  MSec := 0;
+  ZoneMin := 0;
+  L := Length(S);
+  if L = 0 then Exit;
+  // ymd
+  if L = 10 then
+  repeat
+    if S[5] <> '-' then Break;
+    if S[8] <> '-' then Break;
+    C := S[1];
+    case C of
+      '0' .. '9': Year := (Ord(C) - $30) * 1000;
+    else
+      Break;
+    end;
+    C := S[2];
+    case C of
+      '0' .. '9': Inc(Year, (Ord(C) - $30) * 100);
+    else
+      Break;
+    end;
+    C := S[3];
+    case C of
+      '0' .. '9': Inc(Year, (Ord(C) - $30) * 10);
+    else
+      Break;
+    end;
+    C := S[4];
+    case C of
+      '0' .. '9': Inc(Year, Ord(C) - $30);
+    else
+      Break;
+    end;
+
+    C := S[6];
+    case C of
+      '0' .. '9': Month := (Ord(C) - $30) * 10;
+    else
+      Break;
+    end;
+    C := S[7];
+    case C of
+      '0' .. '9': Inc(Month, Ord(C) - $30);
+    else
+      Break;
+    end;
+
+    C := S[9];
+    case C of
+      '0' .. '9': Day := (Ord(C) - $30) * 10;
+    else
+      Break;
+    end;
+    C := S[10];
+    case C of
+      '0' .. '9': Inc(Day, Ord(C) - $30);
+    else
+      Break;
+    end;
+
+    GlobalTime.wYear := Year; GlobalTime.wMonth := Month; GlobalTime.wDay := Day;
+    GlobalTime.wHour := 0; GlobalTime.wMinute := 0; GlobalTime.wSecond := 0;
+    GlobalTime.wMilliseconds := 0;
+    if not SystemTimeToTzSpecificLocalTime(nil, GlobalTime, LocalTime) then
+      RaiseLastOSError;
+    R.CreateDT(SystemTimeToDateTime(LocalTime));
+    Result := True;
+    Exit;
+  until True;
+
+  // ymdhmsfz
+  if L < 14 then Exit;
+
+  if S[5] <> '-' then Exit;
+
+  C := S[1];
+  case C of
+    '0' .. '9': Year := (Ord(C) - $30) * 1000;
+  else
+    Exit;
+  end;
+  C := S[2];
+  case C of
+    '0' .. '9': Inc(Year, (Ord(C) - $30) * 100);
+  else
+    Exit;
+  end;
+  C := S[3];
+  case C of
+    '0' .. '9': Inc(Year, (Ord(C) - $30) * 10);
+  else
+    Exit;
+  end;
+  C := S[4];
+  case C of
+    '0' .. '9': Inc(Year, Ord(C) - $30);
+  else
+    Exit;
+  end;
+
+  C := S[6];
+  case C of
+    '0' .. '9': Month := Ord(C) - $30;
+  else
+    Exit;
+  end;
+  C := S[7];
+  case C of
+    '0' .. '9':
+    begin
+      if S[8] <> '-' then Exit;
+      Month := Month * 10 + (Ord(C) - $30);
+      i := 8;
+    end;
+    '-': i := 7;
+  else
+    Exit;
+  end;
+
+  C := S[i + 1];
+  case C of
+    '0' .. '9': Day := Ord(C) - $30;
+  else
+    Exit;
+  end;
+  C := S[i + 2];
+  case C of
+    '0' .. '9':
+    begin
+      Day := Day * 10 + (Ord(C) - $30);
+      Inc(i, 3);
+    end;
+    'T', 't':
+    begin
+      Inc(i, 3);
+      C := S[i];
+    end;
+    #32, #9:
+    begin
+      Inc(i, 2);
+      repeat
+        Inc(i);
+        if i > L then Exit;
+        C := S[i];
+        case C of
+        #32, #9: Continue;
+        '0' .. '9':
+        else
+          Exit;
+        end;
+      until False;
+    end;
+  else
+    Exit;
+  end;
+
+  case C of
+    '0' .. '9': Hour := Ord(C) - $30;
+  else
+    Exit;
+  end;
+  if i + 2 > L then Exit;
+  C := S[i + 1];
+  case C of
+    '0' .. '9':
+    begin
+      if S[i + 2] <> ':' then Exit;
+      Hour := Hour * 10 + (Ord(C) - $30);
+      Inc(i, 3);
+    end;
+    ':': Inc(i, 2);
+  else
+    Exit;
+  end;
+
+  if i + 2 > L then Exit;
+  C := S[i];
+  case C of
+    '0' .. '9': Min := Ord(C) - $30;
+  else
+    Exit;
+  end;
+  C := S[i + 1];
+  case C of
+    '0' .. '9':
+    begin
+      if S[i + 2] <> ':' then Exit;
+      Min := Min * 10 + (Ord(C) - $30);
+      Inc(i, 3);
+    end;
+    ':': Inc(i, 2);
+  else
+    Exit;
+  end;
+
+  if i > L then Exit;
+  C := S[i];
+  case C of
+    '0' .. '9': Sec := Ord(C) - $30;
+  else
+    Exit;
+  end;
+  if i + 1 <= L then
+  begin
+    C := S[i + 1];
+    case C of
+      '0' .. '9':
+      begin
+        Inc(i, 2);
+        Sec := Sec * 10 + (Ord(C) - $30);
+      end;
+      '.', #32, #9, 'Z', '+', '-': Inc(i, 1);
+    else
+      Exit;
+    end;
+  end else Inc(i, 1);
+
+  if (i <= L) and (S[i] = '.') then
+  begin
+    if i + 1 <= L then
+    begin
+      C := S[i + 1];
+      case C of
+        '0' .. '9':
+        begin
+          if i + 2 <= L then
+          begin
+            D := S[i + 2];
+            case D of
+              '0' .. '9':
+              begin
+                if i + 3 <= L then
+                begin
+                  E := S[i + 3];
+                  case E of
+                    '0' .. '9':
+                    begin
+                      if i + 4 <= L then
+                      begin
+                        F := S[i + 4];
+                        case F of
+                          '0' .. '4':
+                          begin
+                            MSec := (Ord(C) - $30) * 100 + (Ord(D) - $30) * 10 +
+                              (Ord(E) - $30);
+                            Inc(i, 5);
+                          end;
+                          '5' .. '9':
+                          begin
+                            MSec := (Ord(C) - $30) * 100 + (Ord(D) - $30) * 10 +
+                              (Ord(E) - $30) + 1;
+                            Inc(i, 5);
+                          end;
+                          #32, #9, 'Z', '+', '-':
+                          begin
+                            MSec := (Ord(C) - $30) * 100 + (Ord(D) - $30) * 10 +
+                              (Ord(E) - $30);
+                            Inc(i, 4);
+                          end;
+                        else
+                          Exit;
+                        end;
+                      end else
+                      begin
+                        MSec := (Ord(C) - $30) * 100 + (Ord(D) - $30) * 10 +
+                          (Ord(E) - $30);
+                        Inc(i, 4);
+                      end;
+                    end;
+                    #32, #9, 'Z', '+', '-':
+                    begin
+                      MSec := (Ord(C) - $30) * 100 + (Ord(D) - $30) * 10;
+                      Inc(i, 3);
+                    end;
+                  else
+                    Exit;
+                  end;
+                end else
+                begin
+                  MSec := (Ord(C) - $30) * 100 + (Ord(D) - $30) * 10;
+                  Inc(i, 3);
+                end;
+              end;
+              #32, #9, 'Z', '+', '-':
+              begin
+                MSec := (Ord(C) - $30) * 100;
+                Inc(i, 2);
+              end;
+            else
+              Exit;
+            end;
+          end else
+          begin
+            MSec := (Ord(C) - $30) * 100;
+            Inc(i, 2);
+          end;
+        end;
+        #32, #9, 'Z', '+', '-': Inc(i, 1);
+      else
+        Exit;
+      end;
+    end else Inc(i, 1);
+  end;
+
+  while i <= L do
+    case S[i] of
+      #32, #9: Inc(i);
+      'Z', '+', '-': Break;
+    else
+      Exit;
+    end;
+
+  if i <= L then
+  begin
+    F := S[i];
+    case F of
+      'Z': if i <> L then Exit;
+      '+', '-':
+      begin
+        if i + 1 <= L then
+        begin
+          C := S[i + 1];
+          case C of
+            '0' .. '9':
+            begin
+              if i + 2 <= L then
+              begin
+                D := S[i + 2];
+                case D of
+                  '0' .. '9':
+                  begin
+                    ZoneMin := (Ord(C) - $30) * 600 + (Ord(D) - $30) * 60;
+                    Inc(i, 3);
+                  end;
+                  ':':
+                  begin
+                    ZoneMin := (Ord(C) - $30) * 60;
+                    Inc(i, 2);
+                  end;
+                else
+                  Exit;
+                end;
+              end else
+              begin
+                ZoneMin := (Ord(C) - $30) * 60;
+                Inc(i, 2);
+              end;
+            end;
+          else
+            Exit;
+          end;
+        end else
+          Exit;
+
+        if i <= L then
+        begin
+          if S[i] <> ':' then Exit;
+          
+          if i + 1 <= L then
+          begin
+            C := S[i + 1];
+            case C of
+              '0' .. '9':
+              begin
+                if i + 2 <= L then
+                begin
+                  if i + 2 <> L then Exit;
+                  D := S[i + 2];
+                  case D of
+                    '0' .. '9':
+                    begin
+                      ZoneMin := ZoneMin + (Ord(C) - $30) * 10 + (Ord(D) - $30);
+                    end;
+                  else
+                    Exit;
+                  end;
+                end else
+                begin
+                  ZoneMin := ZoneMin + (Ord(C) - $30);
+                end;
+              end;
+            else
+              Exit;
+            end;
+          end else
+            Exit;
+        end;
+
+        if F = '-' then
+          ZoneMin := -ZoneMin;
+      end;
+    else
+      Exit;
+    end;
+  end;
+
+  GlobalTime.wYear := Year; GlobalTime.wMonth := Month; GlobalTime.wDay := Day;
+  GlobalTime.wHour := Hour; GlobalTime.wMinute := Min; GlobalTime.wSecond := Sec;
+  GlobalTime.wMilliseconds := MSec;
+  if not SystemTimeToTzSpecificLocalTime(nil, GlobalTime, LocalTime) then
+    RaiseLastOSError;
+
+  if ZoneMin <> 0 then
+    R.CreateDT(IncMinute(SystemTimeToDateTime(LocalTime), -ZoneMin))
+  else
+    R.CreateDT(SystemTimeToDateTime(LocalTime));
+
+  Result := True;
+  Exit;
 end;
 
 function ResolvePlainScalar(const S: YamlString): CVariant;
