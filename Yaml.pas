@@ -837,6 +837,8 @@ begin
     // parsed
   else if TryYamlScalarToFloat(S, Result) then
     // parsed
+  else if TryYamlScalarToTDateTime(S, Result) then
+    // parsed
   else // TODO: timestamp
     Result.Create(S);
 end;
@@ -926,6 +928,13 @@ begin
       else
         raise EYamlConstructorError.Create('', nil, 'Invalid !!float value: ' + Event.ScalarValue, Event.StartMark);
     end
+    else if Key = yamlTimestampTag then
+    begin
+      if TryYamlScalarToTDateTime(Event.ScalarValue, Result) then
+        // parsed
+      else
+        raise EYamlConstructorError.Create('', nil, 'Invalid !!timestamp value: ' + Event.ScalarValue, Event.StartMark);
+    end
     else if Key = yamlStrTag then
     begin
       Result.Create(Event.ScalarValue);
@@ -989,6 +998,18 @@ begin
       end;
     end;
   end;
+end;
+
+function DateTimeToStrInternal(AValue: TDateTime): UnicodeString;
+var
+  tzi: TTimeZoneInformation;
+  Year, Month, Day, Hour, Minute, Second, MilliSecond: Word;
+begin
+  if GetTimeZoneInformation(tzi) = $FFFFFFFF then // TIME_ZONE_ID_INVALID
+    RaiseLastOSError;
+
+  DecodeDateTime(AValue, Year, Month, Day, Hour, Minute, Second, MilliSecond);
+//  Result := IntToStr()
 end;
 
 procedure DumpYamlInternal(const Emitter: IYamlEventEmitter; const Obj: CVariant);
