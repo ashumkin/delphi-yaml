@@ -1434,7 +1434,8 @@ function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
 implementation
 
-// uses
+uses
+  CVariantDelphiFeatures;
 //   Windows; // OutputDebugString
 
 //-//-//-//-//-//-//-//-//
@@ -1525,6 +1526,7 @@ end;
 function _memcmp(const s1, s2: Pointer; n: Integer): Integer; cdecl; external 'msvcrt.dll' name 'memcmp';
 
 {$WARN UNSAFE_CAST OFF}
+{$WARN UNSAFE_CODE OFF}
 
 function _fread(ptr: Pointer; size, nelem: Integer; stream: Pointer): Integer; cdecl;
 begin
@@ -1541,12 +1543,13 @@ begin
   end;
 end;
 
+{$WARN UNSAFE_CODE ON}
 {$WARN UNSAFE_CAST ON}
 
 procedure __assert(const __cond, __file: PAnsiChar; __line: Integer);
 begin
   if Assigned(AssertErrorProc) then
-    AssertErrorProc(__cond, __file, __line, Pointer(-1))
+    AssertErrorProc(UTF8ToUnicodeString(__cond), UTF8ToUnicodeString(__file), __line, Pointer(-1))
   else
     System.Error(reAssertionFailed);  // loses return address
 end;

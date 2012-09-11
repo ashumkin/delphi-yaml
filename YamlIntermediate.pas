@@ -24,7 +24,7 @@ type
 
   IYamlVersion = interface(IInterface)
   ['{0B1F5CC2-3E4C-4D4C-922B-6E3F1EB871D8}']
-    function GetAsString: string;
+    function GetAsString: UnicodeString;
     function GetMajor: Integer;
     function GetMinor: Integer;
     function GetPatch: Integer;
@@ -37,7 +37,7 @@ type
    * number, and @c Z is the patch version number.
    *)
 
-    property AsString: string read GetAsString;
+    property AsString: UnicodeString read GetAsString;
 
   (**
    * Get the library version numbers.
@@ -1546,11 +1546,11 @@ uses
 type
   TYamlVersionImpl = class(TInterfacedObject, IYamlVersion)
   public
-    function GetAsString: string;
+    function GetAsString: UnicodeString;
     function GetMajor: Integer;
     function GetMinor: Integer;
     function GetPatch: Integer;
-    property AsString: string read GetAsString;
+    property AsString: UnicodeString read GetAsString;
     property Major: Integer read GetMajor;
     property Minor: Integer read GetMinor;
     property Patch: Integer read GetPatch;
@@ -1561,9 +1561,9 @@ begin
   Result := TYamlVersionImpl.Create;
 end;
 
-function TYamlVersionImpl.GetAsString: string;
+function TYamlVersionImpl.GetAsString: UnicodeString;
 begin
-  Result := _yaml_get_version_string;
+  Result := UTF8ToUnicodeString(_yaml_get_version_string);
 end;
 
 function TYamlVersionImpl.GetMajor: Integer;
@@ -1663,8 +1663,8 @@ begin
   if not Assigned(TagDirective) then
     raise ERangeError.Create('TYamlTagDirectiveImpl.Create(PYamlTagDirective): TagDirective = nil');
   inherited Create;
-  FHandle := UTF8Decode(TagDirective.handle);
-  FPrefix := UTF8Decode(TagDirective.prefix);
+  FHandle := UTF8ToUnicodeString(TagDirective.handle);
+  FPrefix := UTF8ToUnicodeString(TagDirective.prefix);
 end;
 
 constructor TYamlTagDirectiveImpl.Create(const TagDirective: IYamlTagDirective);
@@ -1892,28 +1892,28 @@ function TYamlTokenImpl.GetAliasValue: YamlString;
 begin
   if FToken.data.type_ <> yamlAliasToken then
     raise ERangeError.Create('YamlToken.AliasValue: TokenType <> yamlAliasToken');
-  Result := UTF8Decode(FToken.data.alias_value);
+  Result := UTF8ToUnicodeString(FToken.data.alias_value);
 end;
 
 function TYamlTokenImpl.GetAnchorValue: YamlString;
 begin
   if FToken.data.type_ <> yamlAnchorToken then
     raise ERangeError.Create('YamlToken.AnchorValue: TokenType <> yamlAnchorToken');
-  Result := UTF8Decode(FToken.data.anchor_value);
+  Result := UTF8ToUnicodeString(FToken.data.anchor_value);
 end;
 
 function TYamlTokenImpl.GetTagHandle: YamlString;
 begin
   if FToken.data.type_ <> yamlTagToken then
     raise ERangeError.Create('YamlToken.TagHandle: TokenType <> yamlTagToken');
-  Result := UTF8Decode(FToken.data.tag_handle);
+  Result := UTF8ToUnicodeString(FToken.data.tag_handle);
 end;
 
 function TYamlTokenImpl.GetTagSuffix: YamlString;
 begin
   if FToken.data.type_ <> yamlTagToken then
     raise ERangeError.Create('YamlToken.TagSuffix: TokenType <> yamlTagToken');
-  Result := UTF8Decode(FToken.data.tag_suffix);
+  Result := UTF8ToUnicodeString(FToken.data.tag_suffix);
 end;
 
 function TYamlTokenImpl.GetScalarValue: YamlString;
@@ -1924,7 +1924,7 @@ begin
     raise ERangeError.Create('YamlToken.ScalarValue: TokenType <> yamlScalarToken');
   if Assigned(FToken.data.scalar_value) then
     SetString(Temp, FToken.data.scalar_value, FToken.data.scalar_length);
-  Result := UTF8Decode(Temp);
+  Result := UTF8ToUnicodeString(Temp);
 end;
 
 function TYamlTokenImpl.GetScalarStyle: TYamlScalarStyle;
@@ -2091,21 +2091,21 @@ function TYamlEventImpl.GetAliasAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlAliasEvent then
     raise ERangeError.Create('YamlEvent.AliasAnchor: EventType <> yamlAliasEvent');
-  Result := UTF8Decode(FEvent.data.alias_anchor);
+  Result := UTF8ToUnicodeString(FEvent.data.alias_anchor);
 end;
 
 function TYamlEventImpl.GetScalarAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
     raise ERangeError.Create('YamlEvent.ScalarAnchor: EventType <> yamlScalarEvent');
-  Result := UTF8Decode(FEvent.data.scalar_anchor);
+  Result := UTF8ToUnicodeString(FEvent.data.scalar_anchor);
 end;
 
 function TYamlEventImpl.GetScalarTag: YamlString;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
     raise ERangeError.Create('YamlEvent.ScalarTag: EventType <> yamlScalarEvent');
-  Result := UTF8Decode(FEvent.data.scalar_tag);
+  Result := UTF8ToUnicodeString(FEvent.data.scalar_tag);
 end;
 
 function TYamlEventImpl.GetScalarValue: YamlString;
@@ -2116,7 +2116,7 @@ begin
     raise ERangeError.Create('YamlEvent.ScalarTag: EventType <> yamlScalarEvent');
   if Assigned(FEvent.data.scalar_value) then
     SetString(Temp, FEvent.data.scalar_value, FEvent.data.scalar_length);
-  Result := UTF8Decode(Temp);
+  Result := UTF8ToUnicodeString(Temp);
 end;
 
 function TYamlEventImpl.GetScalarPlainImplicit: Boolean;
@@ -2144,14 +2144,14 @@ function TYamlEventImpl.GetSequenceStartAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
     raise ERangeError.Create('YamlEvent.SequenceStartAnchor: EventType <> yamlSequenceStartEvent');
-  Result := UTF8Decode(FEvent.data.sequence_start_anchor);
+  Result := UTF8ToUnicodeString(FEvent.data.sequence_start_anchor);
 end;
 
 function TYamlEventImpl.GetSequenceStartTag: YamlString;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
     raise ERangeError.Create('YamlEvent.SequenceStartTag: EventType <> yamlSequenceStartEvent');
-  Result := UTF8Decode(FEvent.data.sequence_start_tag);
+  Result := UTF8ToUnicodeString(FEvent.data.sequence_start_tag);
 end;
 
 function TYamlEventImpl.GetSequenceStartImplicit: Boolean;
@@ -2172,14 +2172,14 @@ function TYamlEventImpl.GetMappingStartAnchor: YamlString;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
     raise ERangeError.Create('YamlEvent.MappingStartAnchor: EventType <> yamlMappingStartEvent');
-  Result := UTF8Decode(FEvent.data.mapping_start_anchor);
+  Result := UTF8ToUnicodeString(FEvent.data.mapping_start_anchor);
 end;
 
 function TYamlEventImpl.GetMappingStartTag: YamlString;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
     raise ERangeError.Create('YamlEvent.MappingStartTag: EventType <> yamlMappingStartEvent');
-  Result := UTF8Decode(FEvent.data.mapping_start_tag);
+  Result := UTF8ToUnicodeString(FEvent.data.mapping_start_tag);
 end;
 
 function TYamlEventImpl.GetMappingStartImplicit: Boolean;
@@ -2479,7 +2479,7 @@ end;
 
 function TYamlNodeImpl.GetTag: YamlString;
 begin
-  Result := UTF8Decode(GetNode.tag);
+  Result := UTF8ToUnicodeString(GetNode.tag);
 end;
 
 function TYamlNodeImpl.GetScalarValue: YamlString;
@@ -2492,7 +2492,7 @@ begin
     raise ERangeError.Create('YamlNode.ScalarValue: NodeType <> yamlScalarNode');
   if Assigned(Node.data.scalar_value) then
     SetString(Temp, Node.data.scalar_value, Node.data.scalar_length);
-  Result := UTF8Decode(Temp);
+  Result := UTF8ToUnicodeString(Temp);
 end;
 
 function TYamlNodeImpl.GetScalarStyle: TYamlScalarStyle;
@@ -3032,20 +3032,20 @@ begin
   yamlMemoryError:
     raise EYamlMemoryError.Create('YamlParser: out of memory');
   yamlReaderError:
-    raise EYamlReaderError.Create(UTF8Decode(FParserError.problem),
+    raise EYamlReaderError.Create(UTF8ToUnicodeString(FParserError.problem),
       FParserError.problem_value, FParserError.problem_offset);
   yamlScannerError:
-    raise EYamlScannerError.Create(UTF8Decode(FParserError.context),
+    raise EYamlScannerError.Create(UTF8ToUnicodeString(FParserError.context),
       TYamlMarkImpl.Create(@(FParserError.context_mark)),
-      UTF8Decode(FParserError.problem),
+      UTF8ToUnicodeString(FParserError.problem),
       TYamlMarkImpl.Create(@(FParserError.problem_mark)));
   yamlParserError:
-    raise EYamlParserError.Create(UTF8Decode(FParserError.problem),
+    raise EYamlParserError.Create(UTF8ToUnicodeString(FParserError.problem),
       TYamlMarkImpl.Create(@(FParserError.problem_mark)));
   yamlComposerError:
-    raise EYamlComposerError.Create(UTF8Decode(FParserError.context),
+    raise EYamlComposerError.Create(UTF8ToUnicodeString(FParserError.context),
       TYamlMarkImpl.Create(@(FParserError.context_mark)),
-      UTF8Decode(FParserError.problem),
+      UTF8ToUnicodeString(FParserError.problem),
       TYamlMarkImpl.Create(@(FParserError.problem_mark)));
   else
     raise EYamlError.Create('YamlParser: Internal error');
@@ -3288,7 +3288,7 @@ begin
   if FEncoding = yamlUtf8Encoding then
   begin
     SetString(IntValue, PAnsiChar(FMem), FOffset);
-    Result := UTF8Decode(IntValue);
+    Result := UTF8ToUnicodeString(IntValue);
   end else
     raise EYamlError.Create('YamlOutput.Value: only UTF-8 is supported');
 end;
@@ -3476,9 +3476,9 @@ begin
   yamlMemoryError:
     raise EYamlMemoryError.Create('YamlEmitter: out of memory');
   yamlWriterError:
-    raise EYamlWriterError.Create(UTF8Decode(FEmitterError.problem));
+    raise EYamlWriterError.Create(UTF8ToUnicodeString(FEmitterError.problem));
   yamlEmitterError:
-    raise EYamlEmitterError.Create(UTF8Decode(FEmitterError.problem));
+    raise EYamlEmitterError.Create(UTF8ToUnicodeString(FEmitterError.problem));
   else
     raise EYamlError.Create('YamlEmitter: Internal error');
   end;

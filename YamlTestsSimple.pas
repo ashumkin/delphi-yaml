@@ -4,7 +4,7 @@ interface
 
 uses
   TestFramework,
-  YamlDelphiFeatures, YamlIntermediate;
+  CVariantDelphiFeatures, YamlIntermediate;
 
 implementation
 
@@ -19,6 +19,7 @@ type
   end;
 
   TYamlParseTests = class(TYamlTests)
+  protected
     FString: UTF8String;
     procedure SetUp; override;
   published

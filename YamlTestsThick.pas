@@ -4,12 +4,13 @@ interface
 
 uses
   TestFramework,
-  YamlDelphiFeatures, Yaml, CVariants;
+  CVariantDelphiFeatures, Yaml, CVariants;
 
 implementation
 
 uses
-  SysUtils, DateUtils;
+  SysUtils, DateUtils,
+  Variants; // inline in XE2
 
 type
   TYamlTestsThick = class(TTestCase)
@@ -29,7 +30,7 @@ var
 begin
   NowValue := Now;
   NowTxt := DumpYaml(CDateTime(NowValue));
-  Check(SameDateTime(NowValue, LoadYaml(NowTxt).ToDateTime), UTF8Decode(NowTxt) + ' is different from saved value');
+  Check(SameDateTime(NowValue, LoadYaml(NowTxt).ToDateTime), UTF8ToUnicodeString(NowTxt) + ' is different from saved value');
 end;
 
 procedure TYamlTestsThick.TestDumpAndLoad;

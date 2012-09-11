@@ -15,3 +15,7 @@ Makefile
 *.dsk
 *.dsm
 dunit.ini
+__history/*
+*.dproj.local
+*.res
+*.orig

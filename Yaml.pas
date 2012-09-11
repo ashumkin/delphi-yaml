@@ -1151,13 +1151,13 @@ end;
 
 function DumpYaml(const Obj: CVariant): UTF8String;
 var
-  OS: TStringStream;
+  MS: TMemoryStream;
   Emitter: IYamlEventEmitter;
   Event: IYamlEvent;
 begin
-  OS := TStringStream.Create('');
+  MS := TMemoryStream.Create;
   try
-    Emitter := YamlEventEmitter.Create(YamlOutput.Create(OS, yamlUtf8Encoding));
+    Emitter := YamlEventEmitter.Create(YamlOutput.Create(MS, yamlUtf8Encoding));
     Event := YamlEventStreamStart.Create(yamlUtf8Encoding);
     Emitter.Emit(Event);
     Event := YamlEventDocumentStart.Create(nil, [], True);
@@ -1170,9 +1170,13 @@ begin
     // Event := YamlEventStreamEnd.Create;          // don't write '...'
     // Emitter.Emit(Event);
     Emitter.Flush;
-    Result := OS.DataString;
+
+    if MS.Size = 0 then
+      Result := ''
+    else
+      SetString(Result, PAnsiChar(MS.Memory), MS.Size);
   finally
-    FreeAndNil(OS);
+    FreeAndNil(MS);
   end;
 end;
 
