@@ -1004,12 +1004,59 @@ function DateTimeToStrInternal(AValue: TDateTime): UnicodeString;
 var
   tzi: TTimeZoneInformation;
   Year, Month, Day, Hour, Minute, Second, MilliSecond: Word;
+  S: string;
 begin
   if GetTimeZoneInformation(tzi) = $FFFFFFFF then // TIME_ZONE_ID_INVALID
     RaiseLastOSError;
 
   DecodeDateTime(AValue, Year, Month, Day, Hour, Minute, Second, MilliSecond);
-//  Result := IntToStr()
+  S := IntToStr(Year);
+  S := StringOfChar('0', 4 - Length(S)) + S;
+  Result := S;
+  S := IntToStr(Month);
+  S := StringOfChar('0', 2 - Length(S)) + S;
+  Result := Result + '-' + S;
+  S := IntToStr(Day);
+  S := StringOfChar('0', 2 - Length(S)) + S;
+  Result := Result + '-' + S;
+  S := IntToStr(Hour);
+  S := StringOfChar('0', 2 - Length(S)) + S;
+  Result := Result + 'T' + S;
+  S := IntToStr(Minute);
+  S := StringOfChar('0', 2 - Length(S)) + S;
+  Result := Result + ':' + S;
+  S := IntToStr(Second);
+  S := StringOfChar('0', 2 - Length(S)) + S;
+  Result := Result + ':' + S;
+  S := IntToStr(MilliSecond);
+  S := '.' + StringOfChar('0', 3 - Length(S)) + S;
+  if S = '.000' then
+    S := ''
+  else if Copy(S, 3, 2) = '00' then
+    Delete(S, 3, 2)
+  else if Copy(S, 4, 1) = '0' then
+    Delete(S, 4, 1);
+  Result := Result + S;
+
+  if tzi.Bias = 0 then
+    Result := Result + 'Z'
+  else if tzi.Bias < 0 then
+  begin
+    S := IntToStr((-tzi.Bias) div 60);
+    S := StringOfChar('0', 2 - Length(S)) + S;
+    Result := Result + ' +' + S;
+    S := IntToStr((-tzi.Bias) mod 60);
+    S := StringOfChar('0', 2 - Length(S)) + S;
+    Result := Result + ':' + S;
+  end else
+  begin
+    S := IntToStr(tzi.Bias div 60);
+    S := StringOfChar('0', 2 - Length(S)) + S;
+    Result := Result + ' -' + S;
+    S := IntToStr(tzi.Bias mod 60);
+    S := StringOfChar('0', 2 - Length(S)) + S;
+    Result := Result + ':' + S;
+  end;
 end;
 
 procedure DumpYamlInternal(const Emitter: IYamlEventEmitter; const Obj: CVariant);
@@ -1037,6 +1084,11 @@ begin
     vtExtended:
     begin
       Event := YamlEventScalar.Create('', '', FloatToStrInternal(Obj.ToFloat), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtDateTime:
+    begin
+      Event := YamlEventScalar.Create('', '', DateTimeToStrInternal(Obj.ToDateTime), True, False, yamlPlainScalarStyle);
       Emitter.Emit(Event);
     end;
     vtString:
