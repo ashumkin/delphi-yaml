@@ -543,7 +543,31 @@ begin
     '0' .. '9':
     begin
       Day := Day * 10 + (Ord(C) - $30);
-      Inc(i, 3);
+      C := S[i + 3];
+      case C of
+        'T', 't':
+        begin
+          Inc(i, 4);
+          C := S[i];
+        end;
+        #32, #9:
+        begin
+          Inc(i, 4);
+          repeat
+            Inc(i);
+            if i > L then Exit;
+            C := S[i];
+            case C of
+              #32, #9: Continue;
+              '0' .. '9':
+            else
+              Exit;
+            end;
+          until False;
+        end;
+      else
+        Exit;
+      end;
     end;
     'T', 't':
     begin
@@ -558,8 +582,8 @@ begin
         if i > L then Exit;
         C := S[i];
         case C of
-        #32, #9: Continue;
-        '0' .. '9':
+          #32, #9: Continue;
+          '0' .. '9':
         else
           Exit;
         end;
@@ -1141,10 +1165,10 @@ begin
 
     DumpYamlInternal(Emitter, Obj);
 
-    Event := YamlEventDocumentEnd.Create(True);
-    Emitter.Emit(Event);
-    Event := YamlEventStreamEnd.Create;
-    Emitter.Emit(Event);
+    // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
+    // Emitter.Emit(Event);
+    // Event := YamlEventStreamEnd.Create;          // don't write '...'
+    // Emitter.Emit(Event);
     Emitter.Flush;
     Result := OS.DataString;
   finally

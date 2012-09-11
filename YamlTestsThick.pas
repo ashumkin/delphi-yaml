@@ -8,15 +8,29 @@ uses
 
 implementation
 
+uses
+  SysUtils, DateUtils;
+
 type
   TYamlTestsThick = class(TTestCase)
   published
     procedure TestLoad;
     procedure TestLoadAdvanced;
     procedure TestDumpAndLoad;
+    procedure TestDateTime;
   end;
 
 { TYamlTestsThick }
+
+procedure TYamlTestsThick.TestDateTime;
+var
+  NowValue: TDateTime;
+  NowTxt: UTF8String;
+begin
+  NowValue := Now;
+  NowTxt := DumpYaml(CDateTime(NowValue));
+  Check(SameDateTime(NowValue, LoadYaml(NowTxt).ToDateTime), UTF8Decode(NowTxt) + ' is different from saved value');
+end;
 
 procedure TYamlTestsThick.TestDumpAndLoad;
 begin
