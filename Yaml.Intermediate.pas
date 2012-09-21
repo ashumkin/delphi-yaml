@@ -62,7 +62,7 @@ type
    *)
 
   (** The character type (UTF-8 octet). *)
-  YamlString = UnicodeString;
+  // YamlString = UnicodeString;
 
   (** The version directive data. *)
   IYamlVersionDirective = interface(IInterface)
@@ -82,16 +82,16 @@ type
   (** The tag directive data. *)
   IYamlTagDirective = interface(IInterface)
   ['{C97DAEAC-9F62-4001-A23F-EF27ED5BF48D}']
-    function GetHandle: YamlString;
-    function GetPrefix: YamlString;
+    function GetHandle: UnicodeString;
+    function GetPrefix: UnicodeString;
     (** The tag handle. *)
-    property Handle: YamlString read GetHandle;
+    property Handle: UnicodeString read GetHandle;
     (** The tag prefix. *)
-    property Prefix: YamlString read GetPrefix;
+    property Prefix: UnicodeString read GetPrefix;
   end;
   YamlTagDirective = class
   public
-    class function Create(const Handle, Prefix: YamlString): IYamlTagDirective;
+    class function Create(const Handle, Prefix: UnicodeString): IYamlTagDirective;
   end;
   TIYamlTagDirectiveDynArray = array of IYamlTagDirective;
 
@@ -134,88 +134,88 @@ type
   IYamlMark = interface;
   EYamlReaderError = class(EYamlError)
   protected
-    FProblem: YamlString;
+    FProblem: UnicodeString;
     FProblemValue: Integer;
     FProblemOffset: Integer;
   public
-    constructor Create(const Problem: YamlString; ProblemValue, ProblemOffset: Integer);
-    property Problem: YamlString read FProblem;
+    constructor Create(const Problem: UnicodeString; ProblemValue, ProblemOffset: Integer);
+    property Problem: UnicodeString read FProblem;
     property ProblemValue: Integer read FProblemValue;
     property ProblemOffset: Integer read FProblemOffset;
   end;
   (** Cannot scan the input stream. *)
   EYamlScannerError = class(EYamlError)
   protected
-    FContext, FProblem: YamlString;
+    FContext, FProblem: UnicodeString;
     FContextMark, FProblemMark: IYamlMark;
   public
-    constructor Create(const Context: YamlString; const ContextMark: IYamlMark;
-      const Problem: YamlString; const ProblemMark: IYamlMark);
-    property Context: YamlString read FContext;
+    constructor Create(const Context: UnicodeString; const ContextMark: IYamlMark;
+      const Problem: UnicodeString; const ProblemMark: IYamlMark);
+    property Context: UnicodeString read FContext;
     property ContextMark: IYamlMark read FContextMark;
-    property Problem: YamlString read FProblem;
+    property Problem: UnicodeString read FProblem;
     property ProblemMark: IYamlMark read FProblemMark;
   end;
   (** Cannot parse the input stream. *)
   EYamlParserError = class(EYamlError)
   protected
-    FProblem: YamlString;
+    FProblem: UnicodeString;
     FProblemMark: IYamlMark;
   public
-    constructor Create(const Problem: YamlString; const ProblemMark: IYamlMark);
-    property Problem: YamlString read FProblem;
+    constructor Create(const Problem: UnicodeString; const ProblemMark: IYamlMark);
+    property Problem: UnicodeString read FProblem;
     property ProblemMark: IYamlMark read FProblemMark;
   end;
   (** Cannot compose a YAML document. *)
   EYamlComposerError = class(EYamlError)
   protected
-    FContext, FProblem: YamlString;
+    FContext, FProblem: UnicodeString;
     FContextMark, FProblemMark: IYamlMark;
   public
-    constructor Create(const Context: YamlString; const ContextMark: IYamlMark;
-      const Problem: YamlString; const ProblemMark: IYamlMark);
-    property Context: YamlString read FContext;
+    constructor Create(const Context: UnicodeString; const ContextMark: IYamlMark;
+      const Problem: UnicodeString; const ProblemMark: IYamlMark);
+    property Context: UnicodeString read FContext;
     property ContextMark: IYamlMark read FContextMark;
-    property Problem: YamlString read FProblem;
+    property Problem: UnicodeString read FProblem;
     property ProblemMark: IYamlMark read FProblemMark;
   end;
   (** Cannot construct a native data structure. *)
   EYamlConstructorError = class(EYamlError)
   protected
-    FContext, FProblem: YamlString;
+    FContext, FProblem: UnicodeString;
     FContextMark, FProblemMark: IYamlMark;
   public
-    constructor Create(const Context: YamlString; const ContextMark: IYamlMark;
-      const Problem: YamlString; const ProblemMark: IYamlMark);
-    property Context: YamlString read FContext;
+    constructor Create(const Context: UnicodeString; const ContextMark: IYamlMark;
+      const Problem: UnicodeString; const ProblemMark: IYamlMark);
+    property Context: UnicodeString read FContext;
     property ContextMark: IYamlMark read FContextMark;
-    property Problem: YamlString read FProblem;
+    property Problem: UnicodeString read FProblem;
     property ProblemMark: IYamlMark read FProblemMark;
   end;
 
   (** Cannot write to the output stream. *)
   EYamlWriterError = class(EYamlError)
   protected
-    FProblem: YamlString;
+    FProblem: UnicodeString;
   public
-    constructor Create(const Problem: YamlString);
-    property Problem: YamlString read FProblem;
+    constructor Create(const Problem: UnicodeString);
+    property Problem: UnicodeString read FProblem;
   end;
   (** Cannot emit a YAML stream. *)
   EYamlEmitterError = class(EYamlError)
   protected
-    FProblem: YamlString;
+    FProblem: UnicodeString;
   public
-    constructor Create(const Problem: YamlString);
-    property Problem: YamlString read FProblem;
+    constructor Create(const Problem: UnicodeString);
+    property Problem: UnicodeString read FProblem;
   end;
   (** Cannot represent native data structure. *)
   EYamlRepresenterError = class(EYamlError)
   protected
-    FProblem: YamlString;
+    FProblem: UnicodeString;
   public
-    constructor Create(const Problem: YamlString);
-    property Problem: YamlString read FProblem;
+    constructor Create(const Problem: UnicodeString);
+    property Problem: UnicodeString read FProblem;
   end;
 
   (** The pointer position. *)
@@ -353,11 +353,11 @@ type
   ['{AB5E049D-123D-45EB-BFB3-D7B5424AECB4}']
     function GetTokenType: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
-    function GetAliasValue: YamlString;
-    function GetAnchorValue: YamlString;
-    function GetTagHandle: YamlString;
-    function GetTagSuffix: YamlString;
-    function GetScalarValue: YamlString;
+    function GetAliasValue: UnicodeString;
+    function GetAnchorValue: UnicodeString;
+    function GetTagHandle: UnicodeString;
+    function GetTagSuffix: UnicodeString;
+    function GetScalarValue: UnicodeString;
     function GetScalarStyle: TYamlScalarStyle;
     function GetVersionDirective: IYamlVersionDirective;
     function GetTagDirective: IYamlTagDirective;
@@ -375,21 +375,21 @@ type
 
       (** The alias (for @c YAML_ALIAS_TOKEN). *)
         (** The alias value. *)
-        property AliasValue: YamlString read GetAliasValue;
+        property AliasValue: UnicodeString read GetAliasValue;
 
       (** The anchor (for @c YAML_ANCHOR_TOKEN). *)
         (** The anchor value. *)
-        property AnchorValue: YamlString read GetAnchorValue;
+        property AnchorValue: UnicodeString read GetAnchorValue;
 
       (** The tag (for @c YAML_TAG_TOKEN). *)
         (** The tag handle. *)
-        property TagHandle: YamlString read GetTagHandle;
+        property TagHandle: UnicodeString read GetTagHandle;
         (** The tag suffix. *)
-        property TagSuffix: YamlString read GetTagSuffix;
+        property TagSuffix: UnicodeString read GetTagSuffix;
 
       (** The scalar value (for @c YAML_SCALAR_TOKEN). *)
         (** The scalar value. *)
-        property ScalarValue: YamlString read GetScalarValue;
+        property ScalarValue: UnicodeString read GetScalarValue;
         (** The length of the scalar value. *)
         // ScalarLength
         (** The scalar style. *)
@@ -464,19 +464,19 @@ type
     function GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray;
     function GetDocumentStartImplicit: Boolean;
     function GetDocumentEndImplicit: Boolean;
-    function GetAliasAnchor: YamlString;
-    function GetScalarAnchor: YamlString;
-    function GetScalarTag: YamlString;
-    function GetScalarValue: YamlString;
+    function GetAliasAnchor: UnicodeString;
+    function GetScalarAnchor: UnicodeString;
+    function GetScalarTag: UnicodeString;
+    function GetScalarValue: UnicodeString;
     function GetScalarPlainImplicit: Boolean;
     function GetScalarQuotedImplicit: Boolean;
     function GetScalarStyle: TYamlScalarStyle;
-    function GetSequenceStartAnchor: YamlString;
-    function GetSequenceStartTag: YamlString;
+    function GetSequenceStartAnchor: UnicodeString;
+    function GetSequenceStartTag: UnicodeString;
     function GetSequenceStartImplicit: Boolean;
     function GetSequenceStartStyle: TYamlSequenceStyle;
-    function GetMappingStartAnchor: YamlString;
-    function GetMappingStartTag: YamlString;
+    function GetMappingStartAnchor: UnicodeString;
+    function GetMappingStartTag: UnicodeString;
     function GetMappingStartImplicit: Boolean;
     function GetMappingStartStyle: TYamlMappingStyle;
     function GetStartMark: IYamlMark;
@@ -507,15 +507,15 @@ type
 
       (** The alias parameters (for @c YAML_ALIAS_EVENT). *)
         (** The anchor. *)
-        property AliasAnchor: YamlString read GetAliasAnchor;
+        property AliasAnchor: UnicodeString read GetAliasAnchor;
 
       (** The scalar parameters (for @c YAML_SCALAR_EVENT). *)
         (** The anchor. *)
-        property ScalarAnchor: YamlString read GetScalarAnchor;
+        property ScalarAnchor: UnicodeString read GetScalarAnchor;
         (** The tag. *)
-        property ScalarTag: YamlString read GetScalarTag;
+        property ScalarTag: UnicodeString read GetScalarTag;
         (** The scalar value. *)
-        property ScalarValue: YamlString read GetScalarValue;
+        property ScalarValue: UnicodeString read GetScalarValue;
         (** The length of the scalar value. *)
         // ScalarLength
         (** Is the tag optional for the plain style? *)
@@ -527,9 +527,9 @@ type
 
       (** The sequence parameters (for @c YAML_SEQUENCE_START_EVENT). *)
         (** The anchor. *)
-        property SequenceStartAnchor: YamlString read GetSequenceStartAnchor;
+        property SequenceStartAnchor: UnicodeString read GetSequenceStartAnchor;
         (** The tag. *)
-        property SequenceStartTag: YamlString read GetSequenceStartTag;
+        property SequenceStartTag: UnicodeString read GetSequenceStartTag;
         (** Is the tag optional? *)
         property SequenceStartImplicit: Boolean read GetSequenceStartImplicit;
         (** The sequence style. *)
@@ -537,9 +537,9 @@ type
 
       (** The mapping parameters (for @c YAML_MAPPING_START_EVENT). *)
         (** The anchor. *)
-        property MappingStartAnchor: YamlString read GetMappingStartAnchor;
+        property MappingStartAnchor: UnicodeString read GetMappingStartAnchor;
         (** The tag. *)
-        property MappingStartTag: YamlString read GetMappingStartTag;
+        property MappingStartTag: UnicodeString read GetMappingStartTag;
         (** Is the tag optional? *)
         property MappingStartImplicit: Boolean read GetMappingStartImplicit;
         (** The mapping style. *)
@@ -633,7 +633,7 @@ type
 
   YamlEventAlias = class
   public
-    class function Create(const Anchor: YamlString): IYamlEvent;
+    class function Create(const Anchor: UnicodeString): IYamlEvent;
   end;
 
   (**
@@ -660,7 +660,7 @@ type
 
   YamlEventScalar = class
   public
-    class function Create(const Anchor, Tag, Value: YamlString;
+    class function Create(const Anchor, Tag, Value: UnicodeString;
       PlainImplicit, QuotedImplicit: Boolean;
       Style: TYamlScalarStyle): IYamlEvent;
   end;
@@ -683,7 +683,7 @@ type
 
   YamlEventSequenceStart = class
   public
-    class function Create(const Anchor, Tag: YamlString; Implicit: Boolean;
+    class function Create(const Anchor, Tag: UnicodeString; Implicit: Boolean;
       Style: TYamlSequenceStyle): IYamlEvent;
   end;
 
@@ -718,7 +718,7 @@ type
 
   YamlEventMappingStart = class
   public
-    class function Create(const Anchor, Tag: YamlString; Implicit: Boolean;
+    class function Create(const Anchor, Tag: UnicodeString; Implicit: Boolean;
       Style: TYamlMappingStyle): IYamlEvent;
   end;
 
@@ -812,8 +812,8 @@ type
     function GetDocument: IYamlDocument;
     function GetId: Integer; // ids start from 0 while in thin libyaml they start from 1
     function GetNodeType: TYamlNodeType;
-    function GetTag: YamlString;
-    function GetScalarValue: YamlString;
+    function GetTag: UnicodeString;
+    function GetScalarValue: UnicodeString;
     function GetScalarStyle: TYamlScalarStyle;
     function GetSequenceItems: TIYamlNodeDynArray;
     procedure AppendSequenceItem(Item: IYamlNode);
@@ -830,12 +830,12 @@ type
     property NodeType: TYamlNodeType read GetNodeType;
 
     (** The node tag. *)
-    property Tag: YamlString read GetTag;
+    property Tag: UnicodeString read GetTag;
 
     (** The node data. *)
       (** The scalar parameters (for @c YAML_SCALAR_NODE). *)
         (** The scalar value. *)
-        property ScalarValue: YamlString read GetScalarValue;
+        property ScalarValue: UnicodeString read GetScalarValue;
         (** The scalar style. *)
         property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
 
@@ -870,9 +870,9 @@ type
     function GetStartMark: IYamlMark;
     function GetEndMark: IYamlMark;
 
-    function CreateScalar(const Tag, Value: YamlString; Style: TYamlScalarStyle): IYamlNode;
-    function CreateSequence(const Tag: YamlString; Style: TYamlScalarStyle): IYamlNode;
-    function CreateMapping(const Tag: YamlString; Style: TYamlMappingStyle): IYamlNode;
+    function CreateScalar(const Tag, Value: UnicodeString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateSequence(const Tag: UnicodeString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateMapping(const Tag: UnicodeString; Style: TYamlMappingStyle): IYamlNode;
 
     (** The document nodes. *)
     property Nodes: TIYamlNodeDynArray read GetNodes;
@@ -1349,10 +1349,10 @@ type
   ['{AFA9CE76-A93D-4F4A-BAE5-91263B7A091D}']
     function GetSize: Integer;
     function GetSizeWritten: Integer;
-    function GetValue: YamlString;
+    function GetValue: UnicodeString;
     property Size: Integer read GetSize;
     property SizeWritten: Integer read GetSizeWritten;
-    property Value: YamlString read GetValue;  // will have BOM inside !!!
+    property Value: UnicodeString read GetValue;  // will have BOM inside !!!
   end;
   YamlOutput = class
   public
@@ -1644,18 +1644,18 @@ end;
 type
   TYamlTagDirectiveImpl = class(TInterfacedObject, IYamlTagDirective)
   private
-    FHandle, FPrefix: YamlString;
+    FHandle, FPrefix: UnicodeString;
   public
-    constructor Create(const Handle, Prefix: YamlString); overload;
+    constructor Create(const Handle, Prefix: UnicodeString); overload;
     constructor Create(TagDirective: PYamlTagDirective); overload;
     constructor Create(const TagDirective: IYamlTagDirective); overload;
-    function GetHandle: YamlString;
-    function GetPrefix: YamlString;
-    property Handle: YamlString read GetHandle;
-    property Prefix: YamlString read GetPrefix;
+    function GetHandle: UnicodeString;
+    function GetPrefix: UnicodeString;
+    property Handle: UnicodeString read GetHandle;
+    property Prefix: UnicodeString read GetPrefix;
   end;
 
-constructor TYamlTagDirectiveImpl.Create(const Handle, Prefix: YamlString);
+constructor TYamlTagDirectiveImpl.Create(const Handle, Prefix: UnicodeString);
 begin
   inherited Create;
   FHandle := Handle;
@@ -1678,22 +1678,22 @@ begin
   Create(TagDirective.Handle, TagDirective.Prefix);
 end;
 
-class function YamlTagDirective.Create(const Handle, Prefix: YamlString): IYamlTagDirective;
+class function YamlTagDirective.Create(const Handle, Prefix: UnicodeString): IYamlTagDirective;
 begin
   Result := TYamlTagDirectiveImpl.Create(Handle, Prefix);
 end;
 
-function TYamlTagDirectiveImpl.GetHandle: YamlString;
+function TYamlTagDirectiveImpl.GetHandle: UnicodeString;
 begin
   Result := FHandle;
 end;
 
-function TYamlTagDirectiveImpl.GetPrefix: YamlString;
+function TYamlTagDirectiveImpl.GetPrefix: UnicodeString;
 begin
   Result := FPrefix;
 end;
 
-constructor EYamlReaderError.Create(const Problem: YamlString; ProblemValue, ProblemOffset: Integer);
+constructor EYamlReaderError.Create(const Problem: UnicodeString; ProblemValue, ProblemOffset: Integer);
 begin
   if ProblemValue <> -1 then
     inherited CreateFmt('Reader error: %s: #%x at %d', [Problem, ProblemValue, ProblemOffset])
@@ -1704,8 +1704,8 @@ begin
   FProblemOffset := ProblemOffset;
 end;
 
-constructor EYamlScannerError.Create(const Context: YamlString; const ContextMark: IYamlMark;
-  const Problem: YamlString; const ProblemMark: IYamlMark);
+constructor EYamlScannerError.Create(const Context: UnicodeString; const ContextMark: IYamlMark;
+  const Problem: UnicodeString; const ProblemMark: IYamlMark);
 begin
   if Context <> '' then
     inherited CreateFmt('Scanner error: %s at line %d, column %d'#13#10 +
@@ -1721,7 +1721,7 @@ begin
   FProblemMark := ProblemMark;
 end;
 
-constructor EYamlParserError.Create(const Problem: YamlString; const ProblemMark: IYamlMark);
+constructor EYamlParserError.Create(const Problem: UnicodeString; const ProblemMark: IYamlMark);
 begin
   inherited CreateFmt('Parser error: %s at line %d, column %d',
     [Problem, ProblemMark.Line + 1, ProblemMark.Column + 1]);
@@ -1729,8 +1729,8 @@ begin
   FProblemMark := ProblemMark;
 end;
 
-constructor EYamlComposerError.Create(const Context: YamlString; const ContextMark: IYamlMark;
-  const Problem: YamlString; const ProblemMark: IYamlMark);
+constructor EYamlComposerError.Create(const Context: UnicodeString; const ContextMark: IYamlMark;
+  const Problem: UnicodeString; const ProblemMark: IYamlMark);
 begin
   if Context <> '' then
     inherited CreateFmt('Composer error: %s at line %d, column %d'#13#10 +
@@ -1746,8 +1746,8 @@ begin
   FProblemMark := ProblemMark;
 end;
 
-constructor EYamlConstructorError.Create(const Context: YamlString; const ContextMark: IYamlMark;
-  const Problem: YamlString; const ProblemMark: IYamlMark);
+constructor EYamlConstructorError.Create(const Context: UnicodeString; const ContextMark: IYamlMark;
+  const Problem: UnicodeString; const ProblemMark: IYamlMark);
 begin
   if Context <> '' then
     inherited CreateFmt('Constructor error: %s at line %d, column %d'#13#10 +
@@ -1763,19 +1763,19 @@ begin
   FProblemMark := ProblemMark;
 end;
 
-constructor EYamlWriterError.Create(const Problem: YamlString);
+constructor EYamlWriterError.Create(const Problem: UnicodeString);
 begin
   inherited CreateFmt('Writer error: %s', [Problem]);
   FProblem := Problem;
 end;
 
-constructor EYamlEmitterError.Create(const Problem: YamlString);
+constructor EYamlEmitterError.Create(const Problem: UnicodeString);
 begin
   inherited CreateFmt('Emitter error: %s', [Problem]);
   FProblem := Problem;
 end;
 
-constructor EYamlRepresenterError.Create(const Problem: YamlString);
+constructor EYamlRepresenterError.Create(const Problem: UnicodeString);
 begin
   inherited CreateFmt('Representer error: %s', [Problem]);
   FProblem := Problem;
@@ -1843,11 +1843,11 @@ type
     destructor Destroy; override;
     function GetTokenType: TYamlTokenType;
     function GetStreamStartEncoding: TYamlEncoding;
-    function GetAliasValue: YamlString;
-    function GetAnchorValue: YamlString;
-    function GetTagHandle: YamlString;
-    function GetTagSuffix: YamlString;
-    function GetScalarValue: YamlString;
+    function GetAliasValue: UnicodeString;
+    function GetAnchorValue: UnicodeString;
+    function GetTagHandle: UnicodeString;
+    function GetTagSuffix: UnicodeString;
+    function GetScalarValue: UnicodeString;
     function GetScalarStyle: TYamlScalarStyle;
     function GetVersionDirective: IYamlVersionDirective;
     function GetTagDirective: IYamlTagDirective;
@@ -1856,11 +1856,11 @@ type
 
     property TokenType: TYamlTokenType read GetTokenType;
     property StreamStartEncoding: TYamlEncoding read GetStreamStartEncoding;
-    property AliasValue: YamlString read GetAliasValue;
-    property AnchorValue: YamlString read GetAnchorValue;
-    property TagHandle: YamlString read GetTagHandle;
-    property TagSuffix: YamlString read GetTagSuffix;
-    property ScalarValue: YamlString read GetScalarValue;
+    property AliasValue: UnicodeString read GetAliasValue;
+    property AnchorValue: UnicodeString read GetAnchorValue;
+    property TagHandle: UnicodeString read GetTagHandle;
+    property TagSuffix: UnicodeString read GetTagSuffix;
+    property ScalarValue: UnicodeString read GetScalarValue;
     property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
     property VersionDirective: IYamlVersionDirective read GetVersionDirective;
     property TagDirective: IYamlTagDirective read GetTagDirective;
@@ -1892,35 +1892,35 @@ begin
   Result := FToken.data.stream_start_encoding;
 end;
 
-function TYamlTokenImpl.GetAliasValue: YamlString;
+function TYamlTokenImpl.GetAliasValue: UnicodeString;
 begin
   if FToken.data.type_ <> yamlAliasToken then
     raise ERangeError.Create('YamlToken.AliasValue: TokenType <> yamlAliasToken');
   Result := UTF8ToUnicodeString(FToken.data.alias_value);
 end;
 
-function TYamlTokenImpl.GetAnchorValue: YamlString;
+function TYamlTokenImpl.GetAnchorValue: UnicodeString;
 begin
   if FToken.data.type_ <> yamlAnchorToken then
     raise ERangeError.Create('YamlToken.AnchorValue: TokenType <> yamlAnchorToken');
   Result := UTF8ToUnicodeString(FToken.data.anchor_value);
 end;
 
-function TYamlTokenImpl.GetTagHandle: YamlString;
+function TYamlTokenImpl.GetTagHandle: UnicodeString;
 begin
   if FToken.data.type_ <> yamlTagToken then
     raise ERangeError.Create('YamlToken.TagHandle: TokenType <> yamlTagToken');
   Result := UTF8ToUnicodeString(FToken.data.tag_handle);
 end;
 
-function TYamlTokenImpl.GetTagSuffix: YamlString;
+function TYamlTokenImpl.GetTagSuffix: UnicodeString;
 begin
   if FToken.data.type_ <> yamlTagToken then
     raise ERangeError.Create('YamlToken.TagSuffix: TokenType <> yamlTagToken');
   Result := UTF8ToUnicodeString(FToken.data.tag_suffix);
 end;
 
-function TYamlTokenImpl.GetScalarValue: YamlString;
+function TYamlTokenImpl.GetScalarValue: UnicodeString;
 var
   Temp: UTF8String;
 begin
@@ -1985,19 +1985,19 @@ type
     function GetDocumentStartTagDirectives: TIYamlTagDirectiveDynArray;
     function GetDocumentStartImplicit: Boolean;
     function GetDocumentEndImplicit: Boolean;
-    function GetAliasAnchor: YamlString;
-    function GetScalarAnchor: YamlString;
-    function GetScalarTag: YamlString;
-    function GetScalarValue: YamlString;
+    function GetAliasAnchor: UnicodeString;
+    function GetScalarAnchor: UnicodeString;
+    function GetScalarTag: UnicodeString;
+    function GetScalarValue: UnicodeString;
     function GetScalarPlainImplicit: Boolean;
     function GetScalarQuotedImplicit: Boolean;
     function GetScalarStyle: TYamlScalarStyle;
-    function GetSequenceStartAnchor: YamlString;
-    function GetSequenceStartTag: YamlString;
+    function GetSequenceStartAnchor: UnicodeString;
+    function GetSequenceStartTag: UnicodeString;
     function GetSequenceStartImplicit: Boolean;
     function GetSequenceStartStyle: TYamlSequenceStyle;
-    function GetMappingStartAnchor: YamlString;
-    function GetMappingStartTag: YamlString;
+    function GetMappingStartAnchor: UnicodeString;
+    function GetMappingStartTag: UnicodeString;
     function GetMappingStartImplicit: Boolean;
     function GetMappingStartStyle: TYamlMappingStyle;
     function GetStartMark: IYamlMark;
@@ -2010,19 +2010,19 @@ type
     property DocumentStartTagDirectives: TIYamlTagDirectiveDynArray read GetDocumentStartTagDirectives;
     property DocumentStartImplicit: Boolean read GetDocumentStartImplicit;
     property DocumentEndImplicit: Boolean read GetDocumentEndImplicit;
-    property AliasAnchor: YamlString read GetAliasAnchor;
-    property ScalarAnchor: YamlString read GetScalarAnchor;
-    property ScalarTag: YamlString read GetScalarTag;
-    property ScalarValue: YamlString read GetScalarValue;
+    property AliasAnchor: UnicodeString read GetAliasAnchor;
+    property ScalarAnchor: UnicodeString read GetScalarAnchor;
+    property ScalarTag: UnicodeString read GetScalarTag;
+    property ScalarValue: UnicodeString read GetScalarValue;
     property ScalarPlainImplicit: Boolean read GetScalarPlainImplicit;
     property ScalarQuotedImplicit: Boolean read GetScalarQuotedImplicit;
     property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
-    property SequenceStartAnchor: YamlString read GetSequenceStartAnchor;
-    property SequenceStartTag: YamlString read GetSequenceStartTag;
+    property SequenceStartAnchor: UnicodeString read GetSequenceStartAnchor;
+    property SequenceStartTag: UnicodeString read GetSequenceStartTag;
     property SequenceStartImplicit: Boolean read GetSequenceStartImplicit;
     property SequenceStartStyle: TYamlSequenceStyle read GetSequenceStartStyle;
-    property MappingStartAnchor: YamlString read GetMappingStartAnchor;
-    property MappingStartTag: YamlString read GetMappingStartTag;
+    property MappingStartAnchor: UnicodeString read GetMappingStartAnchor;
+    property MappingStartTag: UnicodeString read GetMappingStartTag;
     property MappingStartImplicit: Boolean read GetMappingStartImplicit;
     property MappingStartStyle: TYamlMappingStyle read GetMappingStartStyle;
     property StartMark: IYamlMark read GetStartMark;
@@ -2091,28 +2091,28 @@ begin
   Result := FEvent.data.document_end_implicit <> 0;
 end;
 
-function TYamlEventImpl.GetAliasAnchor: YamlString;
+function TYamlEventImpl.GetAliasAnchor: UnicodeString;
 begin
   if FEvent.data.type_ <> yamlAliasEvent then
     raise ERangeError.Create('YamlEvent.AliasAnchor: EventType <> yamlAliasEvent');
   Result := UTF8ToUnicodeString(FEvent.data.alias_anchor);
 end;
 
-function TYamlEventImpl.GetScalarAnchor: YamlString;
+function TYamlEventImpl.GetScalarAnchor: UnicodeString;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
     raise ERangeError.Create('YamlEvent.ScalarAnchor: EventType <> yamlScalarEvent');
   Result := UTF8ToUnicodeString(FEvent.data.scalar_anchor);
 end;
 
-function TYamlEventImpl.GetScalarTag: YamlString;
+function TYamlEventImpl.GetScalarTag: UnicodeString;
 begin
   if FEvent.data.type_ <> yamlScalarEvent then
     raise ERangeError.Create('YamlEvent.ScalarTag: EventType <> yamlScalarEvent');
   Result := UTF8ToUnicodeString(FEvent.data.scalar_tag);
 end;
 
-function TYamlEventImpl.GetScalarValue: YamlString;
+function TYamlEventImpl.GetScalarValue: UnicodeString;
 var
   Temp: UTF8String;
 begin
@@ -2144,14 +2144,14 @@ begin
   Result := FEvent.data.scalar_style;
 end;
 
-function TYamlEventImpl.GetSequenceStartAnchor: YamlString;
+function TYamlEventImpl.GetSequenceStartAnchor: UnicodeString;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
     raise ERangeError.Create('YamlEvent.SequenceStartAnchor: EventType <> yamlSequenceStartEvent');
   Result := UTF8ToUnicodeString(FEvent.data.sequence_start_anchor);
 end;
 
-function TYamlEventImpl.GetSequenceStartTag: YamlString;
+function TYamlEventImpl.GetSequenceStartTag: UnicodeString;
 begin
   if FEvent.data.type_ <> yamlSequenceStartEvent then
     raise ERangeError.Create('YamlEvent.SequenceStartTag: EventType <> yamlSequenceStartEvent');
@@ -2172,14 +2172,14 @@ begin
   Result := FEvent.data.sequence_start_style;
 end;
 
-function TYamlEventImpl.GetMappingStartAnchor: YamlString;
+function TYamlEventImpl.GetMappingStartAnchor: UnicodeString;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
     raise ERangeError.Create('YamlEvent.MappingStartAnchor: EventType <> yamlMappingStartEvent');
   Result := UTF8ToUnicodeString(FEvent.data.mapping_start_anchor);
 end;
 
-function TYamlEventImpl.GetMappingStartTag: YamlString;
+function TYamlEventImpl.GetMappingStartTag: UnicodeString;
 begin
   if FEvent.data.type_ <> yamlMappingStartEvent then
     raise ERangeError.Create('YamlEvent.MappingStartTag: EventType <> yamlMappingStartEvent');
@@ -2291,7 +2291,7 @@ begin
     raise EYamlMemoryError.Create('YamlEventDocumentEnd.Create: out of memory');
 end;
 
-class function YamlEventAlias.Create(const Anchor: YamlString): IYamlEvent;
+class function YamlEventAlias.Create(const Anchor: UnicodeString): IYamlEvent;
 var
   NewEvent: PYamlEvent;
   InternalAnchor: UTF8String;
@@ -2302,7 +2302,7 @@ begin
     raise EYamlMemoryError.Create('YamlEventAlias.Create: out of memory');
 end;
 
-class function YamlEventScalar.Create(const Anchor, Tag, Value: YamlString;
+class function YamlEventScalar.Create(const Anchor, Tag, Value: UnicodeString;
   PlainImplicit, QuotedImplicit: Boolean;
   Style: TYamlScalarStyle): IYamlEvent;
 var
@@ -2321,7 +2321,7 @@ begin
     raise EYamlMemoryError.Create('YamlEventScalar.Create: out of memory');
 end;
 
-class function YamlEventSequenceStart.Create(const Anchor, Tag: YamlString;
+class function YamlEventSequenceStart.Create(const Anchor, Tag: UnicodeString;
   Implicit: Boolean; Style: TYamlSequenceStyle): IYamlEvent;
 var
   NewEvent: PYamlEvent;
@@ -2345,7 +2345,7 @@ begin
     raise EYamlMemoryError.Create('YamlEventSequenceEnd.Create: out of memory');
 end;
 
-class function YamlEventMappingStart.Create(const Anchor, Tag: YamlString;
+class function YamlEventMappingStart.Create(const Anchor, Tag: UnicodeString;
   Implicit: Boolean; Style: TYamlMappingStyle): IYamlEvent;
 var
   NewEvent: PYamlEvent;
@@ -2383,8 +2383,8 @@ type
     function GetDocument: IYamlDocument;
     function GetId: Integer;
     function GetNodeType: TYamlNodeType;
-    function GetTag: YamlString;
-    function GetScalarValue: YamlString;
+    function GetTag: UnicodeString;
+    function GetScalarValue: UnicodeString;
     function GetScalarStyle: TYamlScalarStyle;
     function GetSequenceItems: TIYamlNodeDynArray;
     procedure AppendSequenceItem(Item: IYamlNode);
@@ -2398,8 +2398,8 @@ type
     property Document: IYamlDocument read GetDocument;
     property Id: Integer read GetId;
     property NodeType: TYamlNodeType read GetNodeType;
-    property Tag: YamlString read GetTag;
-    property ScalarValue: YamlString read GetScalarValue;
+    property Tag: UnicodeString read GetTag;
+    property ScalarValue: UnicodeString read GetScalarValue;
     property ScalarStyle: TYamlScalarStyle read GetScalarStyle;
     property SequenceItems: TIYamlNodeDynArray read GetSequenceItems;
     property SequenceStyle: TYamlSequenceStyle read GetSequenceStyle;
@@ -2433,9 +2433,9 @@ type
     function GetStartMark: IYamlMark;
     function GetEndMark: IYamlMark;
 
-    function CreateScalar(const Tag, Value: YamlString; Style: TYamlScalarStyle): IYamlNode;
-    function CreateSequence(const Tag: YamlString; Style: TYamlScalarStyle): IYamlNode;
-    function CreateMapping(const Tag: YamlString; Style: TYamlMappingStyle): IYamlNode;
+    function CreateScalar(const Tag, Value: UnicodeString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateSequence(const Tag: UnicodeString; Style: TYamlScalarStyle): IYamlNode;
+    function CreateMapping(const Tag: UnicodeString; Style: TYamlMappingStyle): IYamlNode;
 
     function GetYamlDocument: PYamlDocument;
 
@@ -2481,12 +2481,12 @@ begin
   Result := GetNode.type_;
 end;
 
-function TYamlNodeImpl.GetTag: YamlString;
+function TYamlNodeImpl.GetTag: UnicodeString;
 begin
   Result := UTF8ToUnicodeString(GetNode.tag);
 end;
 
-function TYamlNodeImpl.GetScalarValue: YamlString;
+function TYamlNodeImpl.GetScalarValue: UnicodeString;
 var
   Node: PYamlNode;
   Temp: UTF8String;
@@ -2749,7 +2749,7 @@ begin
   Result := TYamlMarkImpl.Create(@(FDocument.end_mark));
 end;
 
-function TYamlDocumentImpl.CreateScalar(const Tag, Value: YamlString; Style: TYamlScalarStyle): IYamlNode;
+function TYamlDocumentImpl.CreateScalar(const Tag, Value: UnicodeString; Style: TYamlScalarStyle): IYamlNode;
 var
   InternalTag, InternalValue: UTF8String;
   NodeId: Integer;
@@ -2763,7 +2763,7 @@ begin
   Result := TYamlNodeImpl.Create(@FDocument, Self, NodeId - 1);
 end;
 
-function TYamlDocumentImpl.CreateSequence(const Tag: YamlString; Style: TYamlScalarStyle): IYamlNode;
+function TYamlDocumentImpl.CreateSequence(const Tag: UnicodeString; Style: TYamlScalarStyle): IYamlNode;
 var
   InternalTag: UTF8String;
   NodeId: Integer;
@@ -2776,7 +2776,7 @@ begin
   Result := TYamlNodeImpl.Create(@FDocument, Self, NodeId - 1);
 end;
 
-function TYamlDocumentImpl.CreateMapping(const Tag: YamlString; Style: TYamlMappingStyle): IYamlNode;
+function TYamlDocumentImpl.CreateMapping(const Tag: UnicodeString; Style: TYamlMappingStyle): IYamlNode;
 var
   InternalTag: UTF8String;
   NodeId: Integer;
@@ -3212,12 +3212,12 @@ type
     procedure Write(const Buffer; Size: Integer); override;
     function GetSize: Integer;
     function GetSizeWritten: Integer;
-    function GetValue: YamlString; virtual;
+    function GetValue: UnicodeString; virtual;
     function GetPSizeWritten: PInteger;
     function GetMem: Pointer;
     property Size: Integer read GetSize;
     property SizeWritten: Integer read GetSizeWritten;
-    property Value: YamlString read GetValue;
+    property Value: UnicodeString read GetValue;
     property PSizeWritten: PInteger read GetPSizeWritten;
     property Mem: Pointer read GetMem;
   end;
@@ -3230,10 +3230,10 @@ type
 
   TYamlOutputBuffer = class(TYamlOutputMemory)
   protected
-    FBuffer: YamlString;
+    FBuffer: UnicodeString;
   public
     constructor Create(SizeInWideChars: Integer);
-    function GetValue: YamlString; override;
+    function GetValue: UnicodeString; override;
   end;
 
   TYamlOutputStream = class(TYamlOutputImpl, IYamlOutputStream)
@@ -3296,7 +3296,7 @@ begin
   Result := FOffset;
 end;
 
-function TYamlOutputMemory.GetValue: YamlString;
+function TYamlOutputMemory.GetValue: UnicodeString;
 var
   IntValue: UTF8String;
 begin
@@ -3329,7 +3329,7 @@ begin
   inherited Create(Pointer(FBuffer), SizeInWideChars * 2, yamlUtf16leEncoding);
 end;
 
-function TYamlOutputBuffer.GetValue: YamlString;
+function TYamlOutputBuffer.GetValue: UnicodeString;
 begin
   Result := Copy(FBuffer, 1, FOffset div 2);
 end;

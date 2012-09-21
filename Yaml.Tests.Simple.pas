@@ -15,7 +15,7 @@ type
     FEvent: IYamlEvent;
     class function EventTypeToString(AEventType: TYamlEventType): string;
     procedure CheckEvent(AEventType: TYamlEventType); overload;
-    procedure CheckEvent(const AScalarValue: YamlString); overload;
+    procedure CheckEvent(const AScalarValue: UnicodeString); overload;
   end;
 
   TYamlParseTests = class(TYamlTests)
@@ -75,7 +75,7 @@ begin
     EventTypeToString(FEvent.EventType), 'Event.EventType');
 end;
 
-procedure TYamlTests.CheckEvent(const AScalarValue: YamlString);
+procedure TYamlTests.CheckEvent(const AScalarValue: UnicodeString);
 begin
   CheckTrue(FEventParser.Next(FEvent), 'YamlParser.Next');
   CheckEquals(EventTypeToString(yamlScalarEvent),

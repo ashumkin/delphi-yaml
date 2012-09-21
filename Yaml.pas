@@ -27,7 +27,7 @@ implementation
 
 uses Math, StrUtils, Windows, DateUtils;
 
-function MatchStringSet(const S: YamlString; const SSet: array of YamlString): Boolean;
+function MatchStringSet(const S: UnicodeString; const SSet: array of UnicodeString): Boolean;
 var
   i: Integer;
 begin
@@ -52,7 +52,7 @@ const
   yamlNInfValues:  array[0 .. 2] of UnicodeString = ('-.inf', '-.Inf', '-.INF');
   yamlNaNValues:   array[0 .. 2] of UnicodeString = ('.nan', '.NaN', '.NAN');
 
-function TryYamlScalarToInt(const S: YamlString; var R: CVariant): Boolean;
+function TryYamlScalarToInt(const S: UnicodeString; var R: CVariant): Boolean;
 var
   i, j, k, L: Integer;
   IntRes: Integer;
@@ -200,7 +200,7 @@ begin
   end;
 end;
 
-function TryYamlScalarToFloat(const S: YamlString; var R: CVariant): Boolean;
+function TryYamlScalarToFloat(const S: UnicodeString; var R: CVariant): Boolean;
 var
   i, j, k, L: Integer;
   m, n: Integer;
@@ -406,7 +406,7 @@ begin
   // dot not found, failure
 end;
 
-function TryYamlScalarToTDateTime(const S: YamlString; var R: CVariant): Boolean;
+function TryYamlScalarToTDateTime(const S: UnicodeString; var R: CVariant): Boolean;
 var
   i, L: Integer;
   Year, Month, Day, Hour, Min, Sec, MSec, ZoneMin: Integer;
@@ -851,7 +851,7 @@ begin
   Exit;
 end;
 
-function ResolvePlainScalar(const S: YamlString): CVariant;
+function ResolvePlainScalar(const S: UnicodeString): CVariant;
 begin
   Result.Destroy;
   if MatchStringSet(S, yamlTrueValues) then
@@ -873,7 +873,7 @@ end;
 // we pass Event because there is no way to peek next event
 function FromYamlInternal(const Parser: IYamlEventParser; var Event: IYamlEvent): CVariant;
 var
-  Key: YamlString;
+  Key: UnicodeString;
 begin
   Result.Destroy;
   while (Event.EventType = yamlStreamStartEvent) or
