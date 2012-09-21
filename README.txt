@@ -17,7 +17,7 @@ Delphi-YAML actually consists of several layers:
 Dependencies:
 - Borland C++ 5.5
 - dUnit: http://dunit.sf.net/
-- CVariants v0.1.1: https://bitbucket.org/OCTAGRAM/delphi-cvariants
+- CVariants v 0.1.2: https://bitbucket.org/OCTAGRAM/delphi-cvariants
 
 Use compile.cmd to recompile C part of libyaml.
 

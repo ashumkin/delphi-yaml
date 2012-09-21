@@ -1,10 +1,10 @@
-unit YamlTestsThick;
+unit Yaml.Tests.Thick;
 
 interface
 
 uses
   TestFramework,
-  CVariantDelphiFeatures, Yaml, CVariants;
+  CVariants.DelphiFeatures, Yaml, CVariants;
 
 implementation
 

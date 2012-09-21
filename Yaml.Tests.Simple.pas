@@ -1,10 +1,10 @@
-unit YamlTestsSimple;
+unit Yaml.Tests.Simple;
 
 interface
 
 uses
   TestFramework,
-  CVariantDelphiFeatures, YamlIntermediate;
+  CVariants.DelphiFeatures, Yaml.Intermediate;
 
 implementation
 

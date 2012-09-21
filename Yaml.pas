@@ -8,10 +8,10 @@ unit Yaml;
 interface
 
 uses
-  SysUtils, Classes, Types, YamlIntermediate, CVariantDelphiFeatures,
+  SysUtils, Classes, Types, Yaml.Intermediate, CVariants.DelphiFeatures,
   CVariants;
 
-{$INCLUDE 'CVariantDelphiFeatures.inc'}
+{$INCLUDE 'CVariants.DelphiFeatures.inc'}
 
 {$IFNDEF DELPHI_HAS_RECORDS}
 {$WARN UNSAFE_TYPE OFF} // CVariant

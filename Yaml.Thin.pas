@@ -1,5 +1,5 @@
 (**
- * @file yamlthin.pas
+ * @file Yaml.Thin.pas
  * @brief Thin binding for libyaml.
  *)
 
@@ -7,7 +7,7 @@
 
 {$WARN UNSAFE_TYPE OFF} // PAnsiChar
 
-unit YamlThin;
+unit Yaml.Thin;
 
 interface
 
@@ -1435,7 +1435,7 @@ function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 implementation
 
 uses
-  CVariantDelphiFeatures;
+  CVariants.DelphiFeatures; // UnicodeString
 //   Windows; // OutputDebugString
 
 //-//-//-//-//-//-//-//-//

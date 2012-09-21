@@ -1,12 +1,12 @@
-program YamlTest;
+program Yaml.Tests.Experimental;
 
 {$APPTYPE CONSOLE}
 
 uses
-  YamlIntermediate in 'YamlIntermediate.pas',
-  YamlThin in 'YamlThin.pas',
+  Yaml.Intermediate in 'Yaml.Intermediate.pas',
+  Yaml.Thin in 'Yaml.Thin.pas',
   SysUtils,
-  YamlDelphiFeatures in 'YamlDelphiFeatures.pas';
+  CVariants.DelphiFeatures;
 
 var
   TestString: UTF8String =

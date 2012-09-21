@@ -1,17 +1,17 @@
 (**
- * @file YamlIntermediate.pas
+ * @file Yaml.Intermediate.pas
  * @brief Intermediate binding to libyaml
  *)
 
 
-unit YamlIntermediate;
+unit Yaml.Intermediate;
 
 interface
 
 uses
-  SysUtils, Classes, Types, YamlThin, CVariantDelphiFeatures;
+  SysUtils, Classes, Types, Yaml.Thin, CVariants.DelphiFeatures;
 
-{$INCLUDE 'CVariantDelphiFeatures.inc'}
+{$INCLUDE 'CVariants.DelphiFeatures.inc'}
 
 {$WARN UNSAFE_TYPE OFF} // PAnsiChar, PWideChar, untyped
 {$WARN UNSAFE_CODE OFF} // @
@@ -96,30 +96,30 @@ type
   TIYamlTagDirectiveDynArray = array of IYamlTagDirective;
 
   (** The stream encoding. *)
-  TYamlEncoding = YamlThin.TYamlEncoding;
+  TYamlEncoding = Yaml.Thin.TYamlEncoding;
 const
   (** Let the parser choose the encoding. *)
-  yamlAnyEncoding = YamlThin.yamlAnyEncoding;
+  yamlAnyEncoding = Yaml.Thin.yamlAnyEncoding;
   (** The default UTF-8 encoding. *)
-  yamlUtf8Encoding = YamlThin.yamlUtf8Encoding;
+  yamlUtf8Encoding = Yaml.Thin.yamlUtf8Encoding;
   (** The UTF-16-LE encoding with BOM. *)
-  yamlUtf16leEncoding = YamlThin.yamlUtf16leEncoding;
+  yamlUtf16leEncoding = Yaml.Thin.yamlUtf16leEncoding;
   (** The UTF-16-BE encoding with BOM. *)
-  yamlUtf16beEncoding = YamlThin.yamlUtf16beEncoding;
+  yamlUtf16beEncoding = Yaml.Thin.yamlUtf16beEncoding;
 
 type
   (** Line break types. *)
 
-  TYamlBreak = YamlThin.TYamlBreak;
+  TYamlBreak = Yaml.Thin.TYamlBreak;
 const
   (** Let the parser choose the break type. *)
-  yamlAnyBreak = YamlThin.yamlAnyBreak;
+  yamlAnyBreak = Yaml.Thin.yamlAnyBreak;
   (** Use CR for line breaks (Mac style). *)
-  yamlCrBreak = YamlThin.yamlCrBreak;
+  yamlCrBreak = Yaml.Thin.yamlCrBreak;
   (** Use LN for line breaks (Unix style). *)
-  yamlLnBreak = YamlThin.yamlLnBreak;
+  yamlLnBreak = Yaml.Thin.yamlLnBreak;
   (** Use CR LN for line breaks (DOS style). *)
-  yamlCrLnBreak = YamlThin.yamlCrLnBreak;
+  yamlCrLnBreak = Yaml.Thin.yamlCrLnBreak;
 
 type
   (** Many bad things could happen with the parser and emitter. *)
@@ -242,47 +242,47 @@ type
    *)
 
   (** Scalar styles. *)
-  TYamlScalarStyle = YamlThin.TYamlScalarStyle;
+  TYamlScalarStyle = Yaml.Thin.TYamlScalarStyle;
 const
   (** Let the emitter choose the style. *)
-  yamlAnyScalarStyle = YamlThin.yamlAnyScalarStyle;
+  yamlAnyScalarStyle = Yaml.Thin.yamlAnyScalarStyle;
 
   (** The plain scalar style. *)
-  yamlPlainScalarStyle = YamlThin.yamlPlainScalarStyle;
+  yamlPlainScalarStyle = Yaml.Thin.yamlPlainScalarStyle;
 
   (** The single-quoted scalar style. *)
-  yamlSingleQuotedScalarStyle = YamlThin.yamlSingleQuotedScalarStyle;
+  yamlSingleQuotedScalarStyle = Yaml.Thin.yamlSingleQuotedScalarStyle;
   (** The double-quoted scalar style. *)
-  yamlDoubleQuotedScalarStyle = YamlThin.yamlDoubleQuotedScalarStyle;
+  yamlDoubleQuotedScalarStyle = Yaml.Thin.yamlDoubleQuotedScalarStyle;
 
   (** The literal scalar style. *)
-  yamlLiteralScalarStyle = YamlThin.yamlLiteralScalarStyle;
+  yamlLiteralScalarStyle = Yaml.Thin.yamlLiteralScalarStyle;
   (** The folded scalar style. *)
-  yamlFoldedScalarStyle = YamlThin.yamlFoldedScalarStyle;
+  yamlFoldedScalarStyle = Yaml.Thin.yamlFoldedScalarStyle;
 
 type
   (** Sequence styles. *)
-  TYamlSequenceStyle = YamlThin.TYamlSequenceStyle;
+  TYamlSequenceStyle = Yaml.Thin.TYamlSequenceStyle;
 const
   (** Let the emitter choose the style. *)
-  yamlAnySequenceStyle = YamlThin.yamlAnySequenceStyle;
+  yamlAnySequenceStyle = Yaml.Thin.yamlAnySequenceStyle;
 
   (** The block sequence style. *)
-  yamlBlockSequenceStyle = YamlThin.yamlBlockSequenceStyle;
+  yamlBlockSequenceStyle = Yaml.Thin.yamlBlockSequenceStyle;
   (** The flow sequence style. *)
-  yamlFlowSequenceStyle = YamlThin.yamlFlowSequenceStyle;
+  yamlFlowSequenceStyle = Yaml.Thin.yamlFlowSequenceStyle;
 
 type
   (** Mapping styles. *)
-  TYamlMappingStyle = YamlThin.TYamlMappingStyle;
+  TYamlMappingStyle = Yaml.Thin.TYamlMappingStyle;
 const
   (** Let the emitter choose the style. *)
-  yamlAnyMappingStyle = YamlThin.yamlAnyMappingStyle;
+  yamlAnyMappingStyle = Yaml.Thin.yamlAnyMappingStyle;
 
   (** The block mapping style. *)
-  yamlBlockMappingStyle = YamlThin.yamlBlockMappingStyle;
+  yamlBlockMappingStyle = Yaml.Thin.yamlBlockMappingStyle;
   (** The flow mapping style. *)
-  yamlFlowMappingStyle = YamlThin.yamlFlowMappingStyle;
+  yamlFlowMappingStyle = Yaml.Thin.yamlFlowMappingStyle;
   (*  YAML_FLOW_SET_MAPPING_STYLE   *)
 
 type
@@ -294,58 +294,58 @@ type
    *)
 
   (** Token types. *)
-  TYamlTokenType = YamlThin.TYamlTokenType;
+  TYamlTokenType = Yaml.Thin.TYamlTokenType;
 const
   (** An empty token. *)
-  yamlNoToken = YamlThin.yamlNoToken;
+  yamlNoToken = Yaml.Thin.yamlNoToken;
 
   (** A STREAM-START token. *)
-  yamlStreamStartToken = YamlThin.yamlStreamStartToken;
+  yamlStreamStartToken = Yaml.Thin.yamlStreamStartToken;
   (** A STREAM-END token. *)
-  yamlStreamEndToken = YamlThin.yamlStreamEndToken;
+  yamlStreamEndToken = Yaml.Thin.yamlStreamEndToken;
 
   (** A VERSION-DIRECTIVE token. *)
-  yamlVersionDirectiveToken = YamlThin.yamlVersionDirectiveToken;
+  yamlVersionDirectiveToken = Yaml.Thin.yamlVersionDirectiveToken;
   (** A TAG-DIRECTIVE token. *)
-  yamlTagDirectiveToken = YamlThin.yamlTagDirectiveToken;
+  yamlTagDirectiveToken = Yaml.Thin.yamlTagDirectiveToken;
   (** A DOCUMENT-START token. *)
-  yamlDocumentStartToken = YamlThin.yamlDocumentStartToken;
+  yamlDocumentStartToken = Yaml.Thin.yamlDocumentStartToken;
   (** A DOCUMENT-END token. *)
-  yamlDocumentEndToken = YamlThin.yamlDocumentEndToken;
+  yamlDocumentEndToken = Yaml.Thin.yamlDocumentEndToken;
 
   (** A BLOCK-SEQUENCE-START token. *)
-  yamlBlockSequenceStartToken = YamlThin.yamlBlockSequenceStartToken;
+  yamlBlockSequenceStartToken = Yaml.Thin.yamlBlockSequenceStartToken;
   (** A BLOCK-SEQUENCE-END token. *)
-  yamlBlockMappingStartToken = YamlThin.yamlBlockMappingStartToken;
+  yamlBlockMappingStartToken = Yaml.Thin.yamlBlockMappingStartToken;
   (** A BLOCK-END token. *)
-  yamlBlockEndToken = YamlThin.yamlBlockEndToken;
+  yamlBlockEndToken = Yaml.Thin.yamlBlockEndToken;
 
   (** A FLOW-SEQUENCE-START token. *)
-  yamlFlowSequenceStartToken = YamlThin.yamlFlowSequenceStartToken;
+  yamlFlowSequenceStartToken = Yaml.Thin.yamlFlowSequenceStartToken;
   (** A FLOW-SEQUENCE-END token. *)
-  yamlFlowSequenceEndToken = YamlThin.yamlFlowSequenceEndToken;
+  yamlFlowSequenceEndToken = Yaml.Thin.yamlFlowSequenceEndToken;
   (** A FLOW-MAPPING-START token. *)
-  yamlFlowMappingStartToken = YamlThin.yamlFlowMappingStartToken;
+  yamlFlowMappingStartToken = Yaml.Thin.yamlFlowMappingStartToken;
   (** A FLOW-MAPPING-END token. *)
-  yamlFlowMappingEndToken = YamlThin.yamlFlowMappingEndToken;
+  yamlFlowMappingEndToken = Yaml.Thin.yamlFlowMappingEndToken;
 
   (** A BLOCK-ENTRY token. *)
-  yamlBlockEntryToken = YamlThin.yamlBlockEntryToken;
+  yamlBlockEntryToken = Yaml.Thin.yamlBlockEntryToken;
   (** A FLOW-ENTRY token. *)
-  yamlFlowEntryToken = YamlThin.yamlFlowEntryToken;
+  yamlFlowEntryToken = Yaml.Thin.yamlFlowEntryToken;
   (** A KEY token. *)
-  yamlKeyToken = YamlThin.yamlKeyToken;
+  yamlKeyToken = Yaml.Thin.yamlKeyToken;
   (** A VALUE token. *)
-  yamlValueToken = YamlThin.yamlValueToken;
+  yamlValueToken = Yaml.Thin.yamlValueToken;
 
   (** An ALIAS token. *)
-  yamlAliasToken = YamlThin.yamlAliasToken;
+  yamlAliasToken = Yaml.Thin.yamlAliasToken;
   (** An ANCHOR token. *)
-  yamlAnchorToken = YamlThin.yamlAnchorToken;
+  yamlAnchorToken = Yaml.Thin.yamlAnchorToken;
   (** A TAG token. *)
-  yamlTagToken = YamlThin.yamlTagToken;
+  yamlTagToken = Yaml.Thin.yamlTagToken;
   (** A SCALAR token. *)
-  yamlScalarToken = YamlThin.yamlScalarToken;
+  yamlScalarToken = Yaml.Thin.yamlScalarToken;
 
 type
   (** The token structure. *)
@@ -424,35 +424,35 @@ type
    *)
 
   (** Event types. *)
-  TYamlEventType = YamlThin.TYamlEventType;
+  TYamlEventType = Yaml.Thin.TYamlEventType;
 const
   (** An empty event. *)
-  yamlNoEvent = YamlThin.yamlNoEvent;
+  yamlNoEvent = Yaml.Thin.yamlNoEvent;
 
   (** A STREAM-START event. *)
-  yamlStreamStartEvent = YamlThin.yamlStreamStartEvent;
+  yamlStreamStartEvent = Yaml.Thin.yamlStreamStartEvent;
   (** A STREAM-END event. *)
-  yamlStreamEndEvent = YamlThin.yamlStreamEndEvent;
+  yamlStreamEndEvent = Yaml.Thin.yamlStreamEndEvent;
 
   (** A DOCUMENT-START event. *)
-  yamlDocumentStartEvent = YamlThin.yamlDocumentStartEvent;
+  yamlDocumentStartEvent = Yaml.Thin.yamlDocumentStartEvent;
   (** A DOCUMENT-END event. *)
-  yamlDocumentEndEvent = YamlThin.yamlDocumentEndEvent;
+  yamlDocumentEndEvent = Yaml.Thin.yamlDocumentEndEvent;
 
   (** An ALIAS event. *)
-  yamlAliasEvent = YamlThin.yamlAliasEvent;
+  yamlAliasEvent = Yaml.Thin.yamlAliasEvent;
   (** A SCALAR event. *)
-  yamlScalarEvent = YamlThin.yamlScalarEvent;
+  yamlScalarEvent = Yaml.Thin.yamlScalarEvent;
 
   (** A SEQUENCE-START event. *)
-  yamlSequenceStartEvent = YamlThin.yamlSequenceStartEvent;
+  yamlSequenceStartEvent = Yaml.Thin.yamlSequenceStartEvent;
   (** A SEQUENCE-END event. *)
-  yamlSequenceEndEvent = YamlThin.yamlSequenceEndEvent;
+  yamlSequenceEndEvent = Yaml.Thin.yamlSequenceEndEvent;
 
   (** A MAPPING-START event. *)
-  yamlMappingStartEvent = YamlThin.yamlMappingStartEvent;
+  yamlMappingStartEvent = Yaml.Thin.yamlMappingStartEvent;
   (** A MAPPING-END event. *)
-  yamlMappingEndEvent = YamlThin.yamlMappingEndEvent;
+  yamlMappingEndEvent = Yaml.Thin.yamlMappingEndEvent;
 
 type
   (** The event structure. *)
@@ -751,22 +751,22 @@ type
    *)
 
   (** The tag @c !!null with the only possible value: @c null. *)
-const yamlNullTag      = YamlThin.yamlNullTag;
+const yamlNullTag      = Yaml.Thin.yamlNullTag;
   (** The tag @c !!bool with the values: @c true and @c false. *)
-const yamlBoolTag      = YamlThin.yamlBoolTag;
+const yamlBoolTag      = Yaml.Thin.yamlBoolTag;
   (** The tag @c !!str for string values. *)
-const yamlStrTag       = YamlThin.yamlStrTag;
+const yamlStrTag       = Yaml.Thin.yamlStrTag;
   (** The tag @c !!int for integer values. *)
-const yamlIntTag       = YamlThin.yamlIntTag;
+const yamlIntTag       = Yaml.Thin.yamlIntTag;
   (** The tag @c !!float for float values. *)
-const yamlFloatTag     = YamlThin.yamlFloatTag;
+const yamlFloatTag     = Yaml.Thin.yamlFloatTag;
   (** The tag @c !!timestamp for date and time values. *)
-const yamlTimestampTag = YamlThin.yamlTimestampTag;
+const yamlTimestampTag = Yaml.Thin.yamlTimestampTag;
 
   (** The tag @c !!seq is used to denote sequences. *)
-const yamlSeqTag       = YamlThin.yamlSeqTag;
+const yamlSeqTag       = Yaml.Thin.yamlSeqTag;
   (** The tag @c !!map is used to denote mapping. *)
-const yamlMapTag       = YamlThin.yamlMapTag;
+const yamlMapTag       = Yaml.Thin.yamlMapTag;
 
   (** The default scalar tag is @c !!str. *)
 const yamlDefaultScalarTag    = yamlStrTag;
@@ -777,17 +777,17 @@ const yamlDefaultMappingTag   = yamlMapTag;
 
   (** Node types. *)
 type
-  TYamlNodeType = YamlThin.TYamlNodeType;
+  TYamlNodeType = Yaml.Thin.TYamlNodeType;
 const
   (** An empty node. *)
-  yamlNoNode = YamlThin.yamlNoNode;
+  yamlNoNode = Yaml.Thin.yamlNoNode;
 
   (** A scalar node. *)
-  yamlScalarNode = YamlThin.yamlScalarNode;
+  yamlScalarNode = Yaml.Thin.yamlScalarNode;
   (** A sequence node. *)
-  yamlSequenceNode = YamlThin.yamlSequenceNode;
+  yamlSequenceNode = Yaml.Thin.yamlSequenceNode;
   (** A mapping node. *)
-  yamlMappingNode = YamlThin.yamlMappingNode;
+  yamlMappingNode = Yaml.Thin.yamlMappingNode;
 
 type
   (** The forward definition of a document structure. *)
@@ -2518,12 +2518,12 @@ begin
   begin
     Start := PAnsiChar(Node.data.sequence_items_start);
     Top := PAnsiChar(Node.data.sequence_items_top);
-    L := (Top - Start) div SizeOf(YamlThin.TYamlNodeItem);
+    L := (Top - Start) div SizeOf(Yaml.Thin.TYamlNodeItem);
     SetLength(Result, L);
     for i := 0 to L - 1 do
     begin
       Result[i] := TYamlNodeImpl.Create(FDocument, FDocumentInterface,
-        YamlThin.PYamlNodeItem(Pointer(Start + i * SizeOf(YamlThin.TYamlNodeItem)))^ - 1);
+        Yaml.Thin.PYamlNodeItem(Pointer(Start + i * SizeOf(Yaml.Thin.TYamlNodeItem)))^ - 1);
     end;
   end;
 end;
@@ -2564,14 +2564,14 @@ begin
   begin
     Start := PAnsiChar(Node.data.mapping_pairs_start);
     Top := PAnsiChar(Node.data.mapping_pairs_top);
-    L := (Top - Start) div SizeOf(YamlThin.TYamlNodePair);
+    L := (Top - Start) div SizeOf(Yaml.Thin.TYamlNodePair);
     SetLength(Result, L);
     for i := 0 to L - 1 do
     begin
       Result[i].Key := TYamlNodeImpl.Create(FDocument, FDocumentInterface,
-        YamlThin.PYamlNodePair(Pointer(Start + i * SizeOf(YamlThin.TYamlNodePair))).key - 1);
+        Yaml.Thin.PYamlNodePair(Pointer(Start + i * SizeOf(Yaml.Thin.TYamlNodePair))).key - 1);
       Result[i].Value := TYamlNodeImpl.Create(FDocument, FDocumentInterface,
-        YamlThin.PYamlNodePair(Pointer(Start + i * SizeOf(YamlThin.TYamlNodePair))).value - 1);
+        Yaml.Thin.PYamlNodePair(Pointer(Start + i * SizeOf(Yaml.Thin.TYamlNodePair))).value - 1);
     end;
   end;
 end;
@@ -2689,7 +2689,7 @@ begin
   begin
     Start := PAnsiChar(FDocument.nodes_start);
     Top := PAnsiChar(FDocument.nodes_top);
-    L := (Top - Start) div SizeOf(YamlThin.TYamlNode);
+    L := (Top - Start) div SizeOf(Yaml.Thin.TYamlNode);
     SetLength(Result, L);
     for i := 0 to L - 1 do
     begin

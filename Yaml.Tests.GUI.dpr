@@ -4,7 +4,7 @@ uses
   Forms,
   TestFrameWork,
   GUITestRunner,
-  YamlAllTests in 'YamlAllTests.pas';
+  Yaml.Tests.All in 'Yaml.Tests.All.pas';
 
 begin
   Application.Initialize;

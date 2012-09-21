@@ -1,11 +1,11 @@
 {$APPTYPE CONSOLE}
 
-program YamlTests;
+program Yaml.Tests.Console;
 
 uses
   TestFrameWork,
   TextTestRunner,
-  YamlAllTests in 'YamlAllTests.pas';
+  Yaml.Tests.All in 'Yaml.Tests.All.pas';
 
 begin
   TextTestRunner.RunRegisteredTests;
