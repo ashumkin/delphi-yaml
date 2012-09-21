@@ -165,7 +165,7 @@ var
   MI: CMapIterator;
 begin
   case Obj.VType of
-    vtEmpty, vtNull:
+    vtEmpty, vtUndefined:
     begin
       Event := YamlEventScalar.Create('', '', 'null', True, False, yamlPlainScalarStyle);
       Emitter.Emit(Event);
