@@ -1131,7 +1131,11 @@ type
       Encoding: TYamlEncoding = yamlAnyEncoding): IYamlInput; overload;
     class function Create(const Input: UTF8String;
       Encoding: TYamlEncoding = yamlUtf8Encoding): IYamlInput; overload;
+    {$IFDEF DELPHI_IS_UNICODE}
     class function Create(const Input: WideString;
+      Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
+    {$ENDIF}
+    class function Create(const Input: UnicodeString;
       Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
     class function Create(Input: PWideChar; SizeInWideChars: Integer = -1; Copy: Boolean = True;
       Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput; overload;
@@ -1348,7 +1352,7 @@ type
     function GetValue: YamlString;
     property Size: Integer read GetSize;
     property SizeWritten: Integer read GetSizeWritten;
-    property Value: YamlString read GetValue;
+    property Value: YamlString read GetValue;  // will have BOM inside !!!
   end;
   YamlOutput = class
   public
@@ -2970,7 +2974,18 @@ begin
   Result := TYamlInputUTF8String.Create(Input, Encoding);
 end;
 
+{$IFDEF DELPHI_IS_UNICODE}
 class function YamlInput.Create(const Input: WideString;
+  Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput;
+begin
+  if Input <> '' then
+    Result := Create(Input[1], Length(Input) * 2, True, Encoding)
+  else
+    Result := Create(nil^, 0, False, Encoding);
+end;
+{$ENDIF}
+
+class function YamlInput.Create(const Input: UnicodeString;
   Encoding: TYamlEncoding = yamlUtf16leEncoding): IYamlInput;
 begin
   if Input <> '' then

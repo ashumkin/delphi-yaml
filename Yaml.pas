@@ -17,8 +17,11 @@ uses
 {$WARN UNSAFE_TYPE OFF} // CVariant
 {$ENDIF}
 
-function LoadYaml(const S: Utf8String): CVariant;
-function DumpYaml(const Obj: CVariant): UTF8String;
+function LoadYamlUtf8(const S: Utf8String): CVariant;
+function DumpYamlUtf8(const Obj: CVariant): UTF8String;
+
+function LoadYaml(const S: UnicodeString): CVariant;
+function DumpYaml(const Obj: CVariant): UnicodeString;
 
 implementation
 
@@ -971,17 +974,6 @@ begin
   end;
 end;
 
-function LoadYaml(const S: Utf8String): CVariant;
-var
-  Parser: IYamlEventParser;
-  Event: IYamlEvent;
-begin
-  Result.Destroy;
-  Parser := YamlEventParser.Create(YamlInput.Create(S));
-  if Parser.Next(Event) then
-    Result := FromYamlInternal(Parser, Event);
-end;
-
 function FloatToStrInternal(AValue: Double): UnicodeString;
 var
   fs: TFormatSettings;
@@ -1149,7 +1141,7 @@ begin
   end;
 end;
 
-function DumpYaml(const Obj: CVariant): UTF8String;
+function DumpYamlUtf8(const Obj: CVariant): UTF8String;
 var
   MS: TMemoryStream;
   Emitter: IYamlEventEmitter;
@@ -1175,6 +1167,59 @@ begin
       Result := ''
     else
       SetString(Result, PAnsiChar(MS.Memory), MS.Size);
+  finally
+    FreeAndNil(MS);
+  end;
+end;
+
+function LoadYamlUtf8(const S: Utf8String): CVariant;
+var
+  Parser: IYamlEventParser;
+  Event: IYamlEvent;
+begin
+  Result.Destroy;
+  Parser := YamlEventParser.Create(YamlInput.Create(S));
+  if Parser.Next(Event) then
+    Result := FromYamlInternal(Parser, Event);
+end;
+
+function LoadYaml(const S: UnicodeString): CVariant;
+var
+  Parser: IYamlEventParser;
+  Event: IYamlEvent;
+begin
+  Result.Destroy;
+  Parser := YamlEventParser.Create(YamlInput.Create(S));
+  if Parser.Next(Event) then
+    Result := FromYamlInternal(Parser, Event);
+end;
+
+function DumpYaml(const Obj: CVariant): UnicodeString;
+var
+  MS: TMemoryStream;
+  Emitter: IYamlEventEmitter;
+  Event: IYamlEvent;
+begin
+  MS := TMemoryStream.Create;
+  try
+    Emitter := YamlEventEmitter.Create(YamlOutput.Create(MS, yamlUtf16leEncoding));
+    Event := YamlEventStreamStart.Create(yamlUtf16leEncoding);
+    Emitter.Emit(Event);
+    Event := YamlEventDocumentStart.Create(nil, [], True);
+    Emitter.Emit(Event);
+
+    DumpYamlInternal(Emitter, Obj);
+
+    // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
+    // Emitter.Emit(Event);
+    // Event := YamlEventStreamEnd.Create;          // don't write '...'
+    // Emitter.Emit(Event);
+    Emitter.Flush;
+
+    if MS.Size = 0 then
+      Result := ''
+    else
+      SetString(Result, PWideChar(MS.Memory) + 1, MS.Size div 2 - 1); // strip BOM
   finally
     FreeAndNil(MS);
   end;
