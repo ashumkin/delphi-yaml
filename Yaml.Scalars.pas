@@ -23,16 +23,26 @@ const
     ('.inf', '.Inf', '.INF', '+.inf', '+.Inf', '+.INF');
   yamlNInfValues:  array[0 .. 2] of UnicodeString = ('-.inf', '-.Inf', '-.INF');
   yamlNaNValues:   array[0 .. 2] of UnicodeString = ('.nan', '.NaN', '.NAN');
+  yamlTagValues:   array[0 .. 4] of UnicodeString = ('<<', '=', '!', '&', '*');
 
 function YamlMatchStringSet(const S: UnicodeString; const SSet: array of UnicodeString): Boolean;
 function YamlTryStrToNull(const S: UnicodeString): Boolean;
-function YamlTryStrToBool(const S: UnicodeString; out R: Boolean): Boolean;
-function YamlTryStrToInt(const S: UnicodeString; out R: Integer): Boolean;
-function YamlTryStrToFloat(const S: UnicodeString; out R: Double): Boolean;
+function YamlTryStrToBool(const S: UnicodeString; out R: Boolean): Boolean; overload;
+function YamlTryStrToBool(const S: UnicodeString): Boolean; overload;
+function YamlTryStrToInt(const S: UnicodeString; out R: Integer): Boolean; overload;
+function YamlTryStrToInt(const S: UnicodeString): Boolean; overload;
+function YamlTryStrToFloat(const S: UnicodeString; out R: Double): Boolean; overload;
+function YamlTryStrToFloat(const S: UnicodeString): Boolean; overload;
 function YamlTryStrToTimeStamp(const S: UnicodeString;
-  out Year, Month, Day, Hour, Min, Sec, MSec: Word; out ZoneMin: Integer): Boolean;
+  out Year, Month, Day, Hour, Min, Sec, MSec: Word;
+  out ZoneMin: Integer): Boolean; overload;
+function YamlTryStrToTimeStamp(const S: UnicodeString): Boolean; overload;
 function YamlTryStrToTDateTime(const S: UnicodeString; out R: TDateTime): Boolean;
 
+function YamlStrCanBePlainScalar(const S: UnicodeString): Boolean;
+
+function YamlBoolToStr(AValue: Boolean): UnicodeString;
+function YamlIntToStr(AValue: Integer): UnicodeString;
 function YamlFloatToStr(AValue: Double): UnicodeString;
 function YamlDateTimeToStr(AValue: TDateTime): UnicodeString;
 
@@ -68,6 +78,17 @@ begin
     R := True
   else if YamlMatchStringSet(S, yamlFalseValues) then
     R := False
+  else
+    Result := False;
+end;
+
+function YamlTryStrToBool(const S: UnicodeString): Boolean;
+begin
+  Result := True;
+  if YamlMatchStringSet(S, yamlTrueValues) then
+    //
+  else if YamlMatchStringSet(S, yamlFalseValues) then
+    //
   else
     Result := False;
 end;
@@ -213,6 +234,137 @@ begin
         R := IntRes
       else
         R := -IntRes;
+      Result := True;
+    end;
+  else
+    Exit;
+  end;
+end;
+
+function YamlTryStrToInt(const S: UnicodeString): Boolean;
+var
+  i, j, k, L: Integer;
+  C, D: WideChar;
+begin
+  Result := False;
+  i := 1;
+  L := Length(S);
+  if L = 0 then Exit;
+  if (S[1] = '+') or (S[1] = '-') then
+    i := 2;
+  if L < i then Exit;
+  if (L = i) and (S[i] = '0') then
+  begin
+    Result := True; Exit;
+  end;
+  case S[i] of
+  '0':
+    case S[i + 1] of
+    'b':
+      begin
+        if i + 2 > L then Exit;
+        for j := i + 2 to L do
+        begin
+          C := S[j];
+          case C of
+          '0' .. '1': ;//
+          '_': ;
+          else
+            Exit;
+          end;
+        end;
+        Result := True;
+      end;
+    'x':
+      begin
+        if i + 2 > L then Exit;
+        for j := i + 2 to L do
+        begin
+          C := S[j];
+          case C of
+          '0' .. '9': ;//
+          'A' .. 'F': ;//
+          'a' .. 'f': ;//
+          '_': ;
+          else
+            Exit;
+          end;
+        end;
+        Result := True;
+      end;
+    else
+      begin
+        for j := i + 1 to L do
+        begin
+          C := S[j];
+          case C of
+          '0' .. '7': ;//
+          '_': ;
+          else
+            Exit;
+          end;
+        end;
+        Result := True;
+      end;
+    end;
+  '1' .. '9':
+    begin
+      for j := i to L do
+      begin
+        C := S[j];
+        case C of
+        '0' .. '9': ;//
+        '_': ;
+        ':':
+          begin
+            k := j;
+            while k <= L do
+            begin
+              if k + 1 > L then Exit;
+              C := S[k + 1];
+              case C of
+              '0' .. '5':
+                begin
+                  if k + 2 > L then
+                  begin
+                    //
+                    Break;
+                  end;
+                  D := S[k + 2];
+                  case D of
+                  '0' .. '9':
+                    begin
+                      //
+                      Inc(k, 3);
+                      if k > L then Break;
+                      if S[k] <> ':' then Exit;
+                    end;
+                  ':':
+                    begin
+                      //
+                      Inc(k, 2);
+                    end;
+                  else
+                    Exit;
+                  end;
+                end;
+              '6' .. '9':
+                begin
+                  //
+                  Inc(k, 2);
+                  if k > L then Break;
+                  if S[k] <> ':' then Exit;
+                end;
+              else
+                Exit;
+              end;
+            end;
+            Break;
+          end;
+        else
+          Exit;
+        end;
+      end;
       Result := True;
     end;
   else
@@ -416,6 +568,161 @@ begin
           else
             R := -IntRes;
         end;
+        Result := True;
+        Exit;
+      end;
+    else
+      Exit;
+    end;
+  end;
+  // dot not found, failure
+end;
+
+function YamlTryStrToFloat(const S: UnicodeString): Boolean;
+var
+  i, j, k, L: Integer;
+  m, n: Integer;
+  C, D: WideChar;
+begin
+  Result := False;
+  if YamlMatchStringSet(S, yamlInfValues) then
+  begin
+    //
+    Result := True;
+    Exit;
+  end;
+  if YamlMatchStringSet(S, yamlNInfValues) then
+  begin
+    //
+    Result := True;
+    Exit;
+  end;
+  if YamlMatchStringSet(S, yamlNaNValues) then
+  begin
+    //
+    Result := True;
+    Exit;
+  end;
+
+  L := Length(S);
+  if L = 0 then Exit;
+  i := 1;
+  case S[1] of
+  '+', '-': Inc(i);
+  end;
+  //
+  if i > L then Exit;
+  for j := i to L do
+  begin
+    C := S[j];
+    case C of
+    '0' .. '9': ;//
+    '_': if j = i then Exit;
+    '.':
+      begin
+        for k := j + 1 to L do
+        begin
+          C := S[k];
+          case C of
+          '0' .. '9': ;//
+          '_': ;
+          'e', 'E':
+            begin
+              // exponential
+              if k + 1 > L then Exit;
+              m := k + 1;
+              case S[m] of
+              '+', '-': Inc(m);
+              end;
+              //
+              if m > L then Exit;
+              for n := m to L do
+              begin
+                C := S[n];
+                case C of
+                '0' .. '9': ;//
+                else
+                  Exit;
+                end;
+              end;
+
+              Result := True;
+              Exit;
+            end;
+          end;
+        end;
+
+        Result := True;
+        Exit;
+      end;
+    ':':
+      begin
+        k := j;
+        while k <= L do
+        begin
+          if k + 1 > L then Exit;
+          C := S[k + 1];
+          case C of
+          '0' .. '5':
+            begin
+              if k + 2 > L then Exit;
+              D := S[k + 2];
+              case D of
+              '0' .. '9':
+                begin
+                  //
+                  Inc(k, 3);
+                  if k > L then Exit;
+                  case S[k] of
+                  ':': ;
+                  '.': Break;
+                  else
+                    Exit;
+                  end;
+                end;
+              ':':
+                begin
+                  //
+                  Inc(k, 2);
+                end;
+              '.':
+                begin
+                  //
+                  Inc(k, 2);
+                  Break;
+                end;
+              else
+                Exit;
+              end;
+            end;
+          '6' .. '9':
+            begin
+              //
+              Inc(k, 2);
+              if k > L then Exit;
+              case S[k] of
+              ':': ;
+              '.': Break;
+              else
+                Exit;
+              end;
+            end;
+          else
+            Exit;
+          end;
+        end;
+
+        for m := k + 1 to L do
+        begin
+          C := S[m];
+          case C of
+            '0' .. '9': ;//
+            '_': ;
+          else
+            Exit;
+          end;
+        end;
+
         Result := True;
         Exit;
       end;
@@ -852,6 +1159,403 @@ begin
   Exit;
 end;
 
+function YamlTryStrToTimeStamp(const S: UnicodeString): Boolean;
+var
+  i, L: Integer;
+  C, D, E, F: WideChar;
+begin
+  Result := False;
+  L := Length(S);
+  if L = 0 then Exit;
+  // ymd
+  if L = 10 then
+  repeat
+    if S[5] <> '-' then Break;
+    if S[8] <> '-' then Break;
+    C := S[1];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+    C := S[2];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+    C := S[3];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+    C := S[4];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+
+    C := S[6];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+    C := S[7];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+
+    C := S[9];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+    C := S[10];
+    case C of
+      '0' .. '9': ;//
+    else
+      Break;
+    end;
+
+    Result := True;
+    Exit;
+  until True;
+
+  // ymdhmsfz
+  if L < 14 then Exit;
+
+  if S[5] <> '-' then Exit;
+
+  C := S[1];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  C := S[2];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  C := S[3];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  C := S[4];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+
+  C := S[6];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  C := S[7];
+  case C of
+    '0' .. '9':
+    begin
+      if S[8] <> '-' then Exit;
+      i := 8;
+    end;
+    '-': i := 7;
+  else
+    Exit;
+  end;
+
+  C := S[i + 1];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  C := S[i + 2];
+  case C of
+    '0' .. '9':
+    begin
+      C := S[i + 3];
+      case C of
+        'T', 't':
+        begin
+          Inc(i, 4);
+          C := S[i];
+        end;
+        #32, #9:
+        begin
+          Inc(i, 4);
+          repeat
+            Inc(i);
+            if i > L then Exit;
+            C := S[i];
+            case C of
+              #32, #9: Continue;
+              '0' .. '9':
+            else
+              Exit;
+            end;
+          until False;
+        end;
+      else
+        Exit;
+      end;
+    end;
+    'T', 't':
+    begin
+      Inc(i, 3);
+      C := S[i];
+    end;
+    #32, #9:
+    begin
+      Inc(i, 2);
+      repeat
+        Inc(i);
+        if i > L then Exit;
+        C := S[i];
+        case C of
+          #32, #9: Continue;
+          '0' .. '9':
+        else
+          Exit;
+        end;
+      until False;
+    end;
+  else
+    Exit;
+  end;
+
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  if i + 2 > L then Exit;
+  C := S[i + 1];
+  case C of
+    '0' .. '9':
+    begin
+      if S[i + 2] <> ':' then Exit;
+      Inc(i, 3);
+    end;
+    ':': Inc(i, 2);
+  else
+    Exit;
+  end;
+
+  if i + 2 > L then Exit;
+  C := S[i];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  C := S[i + 1];
+  case C of
+    '0' .. '9':
+    begin
+      if S[i + 2] <> ':' then Exit;
+      Inc(i, 3);
+    end;
+    ':': Inc(i, 2);
+  else
+    Exit;
+  end;
+
+  if i > L then Exit;
+  C := S[i];
+  case C of
+    '0' .. '9': ;//
+  else
+    Exit;
+  end;
+  if i + 1 <= L then
+  begin
+    C := S[i + 1];
+    case C of
+      '0' .. '9':
+      begin
+        Inc(i, 2);
+      end;
+      '.', #32, #9, 'Z', '+', '-': Inc(i, 1);
+    else
+      Exit;
+    end;
+  end else Inc(i, 1);
+
+  if (i <= L) and (S[i] = '.') then
+  begin
+    if i + 1 <= L then
+    begin
+      C := S[i + 1];
+      case C of
+        '0' .. '9':
+        begin
+          if i + 2 <= L then
+          begin
+            D := S[i + 2];
+            case D of
+              '0' .. '9':
+              begin
+                if i + 3 <= L then
+                begin
+                  E := S[i + 3];
+                  case E of
+                    '0' .. '9':
+                    begin
+                      if i + 4 <= L then
+                      begin
+                        F := S[i + 4];
+                        case F of
+                          '0' .. '4':
+                          begin
+                            Inc(i, 5);
+                          end;
+                          '5' .. '9':
+                          begin
+                            Inc(i, 5);
+                          end;
+                          #32, #9, 'Z', '+', '-':
+                          begin
+                            Inc(i, 4);
+                          end;
+                        else
+                          Exit;
+                        end;
+                      end else
+                      begin
+                        Inc(i, 4);
+                      end;
+                    end;
+                    #32, #9, 'Z', '+', '-':
+                    begin
+                      Inc(i, 3);
+                    end;
+                  else
+                    Exit;
+                  end;
+                end else
+                begin
+                  Inc(i, 3);
+                end;
+              end;
+              #32, #9, 'Z', '+', '-':
+              begin
+                Inc(i, 2);
+              end;
+            else
+              Exit;
+            end;
+          end else
+          begin
+            Inc(i, 2);
+          end;
+        end;
+        #32, #9, 'Z', '+', '-': Inc(i, 1);
+      else
+        Exit;
+      end;
+    end else Inc(i, 1);
+  end;
+
+  while i <= L do
+    case S[i] of
+      #32, #9: Inc(i);
+      'Z', '+', '-': Break;
+    else
+      Exit;
+    end;
+
+  if i <= L then
+  begin
+    F := S[i];
+    case F of
+      'Z': if i <> L then Exit;
+      '+', '-':
+      begin
+        if i + 1 <= L then
+        begin
+          C := S[i + 1];
+          case C of
+            '0' .. '9':
+            begin
+              if i + 2 <= L then
+              begin
+                D := S[i + 2];
+                case D of
+                  '0' .. '9':
+                  begin
+                    Inc(i, 3);
+                  end;
+                  ':':
+                  begin
+                    Inc(i, 2);
+                  end;
+                else
+                  Exit;
+                end;
+              end else
+              begin
+                Inc(i, 2);
+              end;
+            end;
+          else
+            Exit;
+          end;
+        end else
+          Exit;
+
+        if i <= L then
+        begin
+          if S[i] <> ':' then Exit;
+
+          if i + 1 <= L then
+          begin
+            C := S[i + 1];
+            case C of
+              '0' .. '9':
+              begin
+                if i + 2 <= L then
+                begin
+                  if i + 2 <> L then Exit;
+                  D := S[i + 2];
+                  case D of
+                    '0' .. '9':
+                    begin
+                    end;
+                  else
+                    Exit;
+                  end;
+                end else
+                begin
+                end;
+              end;
+            else
+              Exit;
+            end;
+          end else
+            Exit;
+        end;
+      end;
+    else
+      Exit;
+    end;
+  end;
+
+  Result := True;
+  Exit;
+end;
+
 function YamlTryStrToTDateTime(const S: UnicodeString; out R: TDateTime): Boolean;
 var
   Year, Month, Day, Hour, Min, Sec, MSec: Word;
@@ -874,6 +1578,30 @@ begin
 
     Result := True;
   end;
+end;
+
+function YamlStrCanBePlainScalar(const S: UnicodeString): Boolean;
+begin
+  Result := False;
+  if YamlTryStrToNull(S) then Exit;
+  if YamlTryStrToBool(S) then Exit;
+  if YamlTryStrToInt(S) then Exit;
+  if YamlTryStrToFloat(S) then Exit;
+  if YamlTryStrToTimeStamp(S) then Exit;
+  Result := True;
+end;
+
+function YamlBoolToStr(AValue: Boolean): UnicodeString;
+begin
+  if AValue then
+    Result := 'true'
+  else
+    Result := 'false';
+end;
+
+function YamlIntToStr(AValue: Integer): UnicodeString;
+begin
+  Result := IntToStr(AValue);
 end;
 
 function YamlFloatToStr(AValue: Double): UnicodeString;

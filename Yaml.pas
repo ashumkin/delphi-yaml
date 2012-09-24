@@ -26,7 +26,6 @@ function DumpYaml(const Obj: CVariant): UnicodeString;
 implementation
 
 uses
-  StrUtils, // IfThen
   Variants, // Destroy, CreateDT inline
   Yaml.Scalars;
 
@@ -172,12 +171,12 @@ begin
     end;
     vtBoolean:
     begin
-      Event := YamlEventScalar.Create('', '', IfThen(Obj.ToBool, 'true', 'false'), True, False, yamlPlainScalarStyle);
+      Event := YamlEventScalar.Create('', '', YamlBoolToStr(Obj.ToBool), True, False, yamlPlainScalarStyle);
       Emitter.Emit(Event);
     end;
     vtInteger:
     begin
-      Event := YamlEventScalar.Create('', '', IntToStr(Obj.ToInt), True, False, yamlPlainScalarStyle);
+      Event := YamlEventScalar.Create('', '', YamlIntToStr(Obj.ToInt), True, False, yamlPlainScalarStyle);
       Emitter.Emit(Event);
     end;
     vtExtended:
