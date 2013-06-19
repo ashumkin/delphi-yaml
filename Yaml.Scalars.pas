@@ -881,7 +881,7 @@ begin
             C := S[i];
             case C of
               #32, #9: Continue;
-              '0' .. '9':
+              '0' .. '9': Break;
             else
               Exit;
             end;
@@ -905,7 +905,7 @@ begin
         C := S[i];
         case C of
           #32, #9: Continue;
-          '0' .. '9':
+          '0' .. '9': Break;
         else
           Exit;
         end;
@@ -1667,7 +1667,7 @@ begin
   Result := Result + '-' + S;
   S := IntToStr(Hour);
   S := StringOfChar('0', 2 - Length(S)) + S;
-  Result := Result + 'T' + S;
+  Result := Result + ' ' + S;
   S := IntToStr(Minute);
   S := StringOfChar('0', 2 - Length(S)) + S;
   Result := Result + ':' + S;

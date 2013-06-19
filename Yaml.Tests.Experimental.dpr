@@ -5,23 +5,34 @@ program Yaml.Tests.Experimental;
 uses
   Yaml.Intermediate in 'Yaml.Intermediate.pas',
   Yaml.Thin in 'Yaml.Thin.pas',
+  Yaml.Scalars in 'Yaml.Scalars.pas',
+  Yaml In 'Yaml.pas',
   SysUtils,
   CVariants.DelphiFeatures;
 
 var
   TestString: UTF8String =
-    'testdict:'#13#10 +
-    '  - 2'#13#10 +
-    '  -'#13#10 +
-    '  - !!int "2"'#13#10 +
-    '  - ["4", true]'#13#10 +
-    '"another key": abc'#13#10;
+    '{' +
+    '"payment_id":"213123112312",' +
+    '"status":"auth",' +
+    '"params": {' +
+    '"sum":"123000",' +
+    '"msisdn":9035287298' +
+    '}' +
+    '}';
 
   EventParser: IYamlEventParser;
   Event: IYamlEvent;
+  R: TDateTime;
 begin
-  WriteLn('version: ', YamlVersion.AsString);
-  WriteLn('version2: ', YamlVersion.Major, '.', YamlVersion.Minor, '.', YamlVersion.Patch);
+//  WriteLn('version: ', YamlVersion.AsString);
+//  WriteLn('version2: ', YamlVersion.Major, '.', YamlVersion.Minor, '.', YamlVersion.Patch);
+  WriteLn(YamlTryStrToTDateTime('2013-08-12 00:00:00 +04:00', R));
+  WriteLn(YamlDateTimeToStr(R));
+
+//  WriteLn(DumpYaml(LoadYaml(TestString)));
+
+(*
   try
     EventParser := YamlEventParser.Create(YamlInput.Create(TestString));
     while EventParser.Next(Event) do
@@ -44,5 +55,6 @@ begin
     on E: Exception do
       WriteLn(ErrOutput, E.Message);
   end;
+  *)
   ReadLn;
 end.
