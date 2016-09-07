@@ -318,6 +318,8 @@ begin
               Result := True;
               Exit;
             end;
+          else
+            Exit;
           end;
         end;
 
