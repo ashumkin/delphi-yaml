@@ -19,60 +19,10 @@ type
     procedure TestLoadAdvanced;
     procedure TestDumpAndLoad;
     procedure TestDateTime;
+    procedure TestDateTimeSpace;
   end;
 
 { TYamlTestsThick }
-
-procedure TYamlTestsThick.TestDateTime;
-var
-  NowValue: TDateTime;
-  NowTxt: UTF8String;
-begin
-  NowValue := Now;
-  NowTxt := DumpYamlUtf8(CDateTime(NowValue));
-  Check(SameDateTime(NowValue, LoadYamlUtf8(NowTxt).ToDateTime), UTF8ToUnicodeString(NowTxt) + ' is different from saved value');
-end;
-
-procedure TYamlTestsThick.TestDumpAndLoad;
-begin
-  Check(
-    LoadYamlUtf8(DumpYamlUtf8(CMap([
-      'testdict',
-        VList([
-          2,
-          nil,
-          VList(['4', True])
-        ]),
-      'another key', 'abc'
-    ]))).Equals(CMap([
-      'testdict',
-        VList([
-          2,
-          nil,
-          VList(['4', True])
-        ]),
-      'another key', 'abc'
-    ])), 'dump -> load -> equals test (utf8)');
-
-  Check(
-    LoadYaml(DumpYaml(CMap([
-      'testdict',
-        VList([
-          2,
-          nil,
-          VList(['4', True])
-        ]),
-      'another key', 'abc'
-    ]))).Equals(CMap([
-      'testdict',
-        VList([
-          2,
-          nil,
-          VList(['4', True])
-        ]),
-      'another key', 'abc'
-    ])), 'dump -> load -> equals test (unicode)');
-end;
 
 procedure TYamlTestsThick.TestLoad;
 begin
@@ -173,6 +123,73 @@ begin
       ])
     ]))
   );
+end;
+
+procedure TYamlTestsThick.TestDumpAndLoad;
+begin
+  Check(
+    LoadYamlUtf8(DumpYamlUtf8(CMap([
+      'testdict',
+        VList([
+          2,
+          nil,
+          VList(['4', True])
+        ]),
+      'another key', 'abc'
+    ]))).Equals(CMap([
+      'testdict',
+        VList([
+          2,
+          nil,
+          VList(['4', True])
+        ]),
+      'another key', 'abc'
+    ])), 'dump -> load -> equals test (utf8)');
+
+  Check(
+    LoadYaml(DumpYaml(CMap([
+      'testdict',
+        VList([
+          2,
+          nil,
+          VList(['4', True])
+        ]),
+      'another key', 'abc'
+    ]))).Equals(CMap([
+      'testdict',
+        VList([
+          2,
+          nil,
+          VList(['4', True])
+        ]),
+      'another key', 'abc'
+    ])), 'dump -> load -> equals test (unicode)');
+end;
+
+procedure TYamlTestsThick.TestDateTime;
+var
+  NowValue: TDateTime;
+  NowTxt: UTF8String;
+begin
+  NowValue := Now;
+  NowTxt := DumpYamlUtf8(CDateTime(NowValue));
+  Check(SameDateTime(NowValue, LoadYamlUtf8(NowTxt).ToDateTime), UTF8ToUnicodeString(NowTxt) + ' is different from saved value');
+end;
+
+procedure TYamlTestsThick.TestDateTimeSpace;
+const
+  ISODate = '2016-12-08T21:45:15.45+07:00';
+  SpaceDate = '2016-12-08 21:45:15.45 +07:00';
+var
+  ISODateParsed, SpaceDateParsed: TDateTime;
+begin
+  ISODateParsed := LoadYamlUtf8(ISODate).ToDateTime;
+  SpaceDateParsed := LoadYamlUtf8(SpaceDate).ToDateTime;
+  Check(SameDateTime(ISODateParsed, SpaceDateParsed),
+    UTF8ToUnicodeString(ISODate) + ' and ' + UTF8ToUnicodeString(SpaceDate) +
+    ' were parsed to different values:' +
+    UTF8ToUnicodeString(DumpYamlUtf8(CDateTime(ISODateParsed))) + ' and ' +
+    UTF8ToUnicodeString(DumpYamlUtf8(CDateTime(SpaceDateParsed))));
 end;
 
 initialization

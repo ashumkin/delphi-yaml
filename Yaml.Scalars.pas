@@ -569,14 +569,14 @@ begin
         end;
         #32, #9:
         begin
-          Inc(i, 4);
+          Inc(i, 3);
           repeat
             Inc(i);
             if i > L then Exit;
             C := S[i];
             case C of
               #32, #9: Continue;
-              '0' .. '9':
+              '0' .. '9': Break;
             else
               Exit;
             end;
@@ -600,7 +600,7 @@ begin
         C := S[i];
         case C of
           #32, #9: Continue;
-          '0' .. '9':
+          '0' .. '9': Break;
         else
           Exit;
         end;
