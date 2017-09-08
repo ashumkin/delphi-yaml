@@ -296,7 +296,7 @@ begin
               else
                 Inc(Digits, Expo);
 
-              if Digits < 0 then
+              if Digits > 0 then
               begin
                 if S[1] <> '-' then
                   R := IntRes * IntPower(0.1, Digits)
@@ -323,7 +323,7 @@ begin
           end;
         end;
 
-        if Digits < 0 then
+        if Digits > 0 then
         begin
           if S[1] <> '-' then
             R := IntRes * IntPower(0.1, Digits)
@@ -406,7 +406,7 @@ begin
           end;
         end;
 
-        if Digits < 0 then
+        if Digits > 0 then
         begin
           if S[1] <> '-' then
             R := IntRes * IntPower(0.1, Digits)

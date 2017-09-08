@@ -9,8 +9,9 @@ uses
 implementation
 
 uses
-  SysUtils, DateUtils,
-  Variants; // inline in XE2
+  SysUtils, DateUtils, Yaml.Scalars,
+  Variants, // inline in XE2
+  Windows; // locale for floating point
 
 type
   TYamlTestsThick = class(TTestCase)
@@ -20,6 +21,7 @@ type
     procedure TestDumpAndLoad;
     procedure TestDateTime;
     procedure TestDateTimeSpace;
+    procedure TestFloating;
   end;
 
 { TYamlTestsThick }
@@ -190,6 +192,23 @@ begin
     ' were parsed to different values:' +
     UTF8ToUnicodeString(DumpYamlUtf8(CDateTime(ISODateParsed))) + ' and ' +
     UTF8ToUnicodeString(DumpYamlUtf8(CDateTime(SpaceDateParsed))));
+end;
+
+procedure TYamlTestsThick.TestFloating;
+var
+  ParsedFP: Double;
+  FS: SysUtils.TFormatSettings;
+begin
+  SysUtils.GetLocaleFormatSettings($0409, FS);
+  Check(Yaml.Scalars.YamlTryStrToFloat('0.00012345', ParsedFP), '''0.00012345'' parsed as scalar');
+  Check(ParsedFP > 0.00012344, 'LoadYamlUtf8(''0.00012345'') = ' + FloatToStr(ParsedFP, FS));
+  Check(ParsedFP < 0.00012346, 'LoadYamlUtf8(''0.00012345'') = ' + FloatToStr(ParsedFP, FS));
+  Check(Yaml.Scalars.YamlTryStrToFloat('0.000012345e1', ParsedFP), '''0.000012345e1'' parsed as scalar');
+  Check(ParsedFP > 0.00012344, 'LoadYamlUtf8(''0.000012345e1'') = ' + FloatToStr(ParsedFP, FS));
+  Check(ParsedFP < 0.00012346, 'LoadYamlUtf8(''0.000012345e1'') = ' + FloatToStr(ParsedFP, FS));
+  Check(Yaml.Scalars.YamlTryStrToFloat('0.0012345e-1', ParsedFP), '''0.0012345e-1'' parsed as scalar');
+  Check(ParsedFP > 0.00012344, 'LoadYamlUtf8(''0.0012345e-1'') = ' + FloatToStr(ParsedFP, FS));
+  Check(ParsedFP < 0.00012346, 'LoadYamlUtf8(''0.0012345e-1'') = ' + FloatToStr(ParsedFP, FS));
 end;
 
 initialization
