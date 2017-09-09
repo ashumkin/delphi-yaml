@@ -10,8 +10,7 @@ implementation
 
 uses
   SysUtils, DateUtils, Yaml.Scalars,
-  Variants, // inline in XE2
-  Windows; // locale for floating point
+  Variants; // inline in XE2
 
 type
   TYamlTestsThick = class(TTestCase)
@@ -199,7 +198,7 @@ var
   ParsedFP: Double;
   FS: SysUtils.TFormatSettings;
 begin
-  SysUtils.GetLocaleFormatSettings($0409, FS);
+  FS.DecimalSeparator := '.';
   Check(Yaml.Scalars.YamlTryStrToFloat('0.00012345', ParsedFP), '''0.00012345'' parsed as scalar');
   Check(ParsedFP > 0.00012344, 'LoadYamlUtf8(''0.00012345'') = ' + FloatToStr(ParsedFP, FS));
   Check(ParsedFP < 0.00012346, 'LoadYamlUtf8(''0.00012345'') = ' + FloatToStr(ParsedFP, FS));
