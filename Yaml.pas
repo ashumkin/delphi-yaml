@@ -19,9 +19,11 @@ uses
 
 function LoadYamlUtf8(const S: Utf8String): CVariant;
 function DumpYamlUtf8(const Obj: CVariant): UTF8String;
+function DumpJsonUtf8(const Obj: CVariant): UTF8String;
 
 function LoadYaml(const S: UnicodeString): CVariant;
 function DumpYaml(const Obj: CVariant): UnicodeString;
+function DumpJson(const Obj: CVariant): UnicodeString;
 
 implementation
 
@@ -224,6 +226,72 @@ begin
   end;
 end;
 
+procedure DumpJsonInternal(const Emitter: IYamlEventEmitter; const Obj: CVariant);
+var
+  Event: IYamlEvent;
+  LI: CListIterator;
+  MI: CMapIterator;
+begin
+  case Obj.VType of
+    vtEmpty, vtNull:
+    begin
+      Event := YamlEventScalar.Create('', '', 'null', True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtBoolean:
+    begin
+      Event := YamlEventScalar.Create('', '', IfThen(Obj.ToBool, 'true', 'false'), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtInteger:
+    begin
+      Event := YamlEventScalar.Create('', '', IntToStr(Obj.ToInt), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtExtended:
+    begin
+      Event := YamlEventScalar.Create('', '', YamlFloatToStr(Obj.ToFloat), True, False, yamlPlainScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtDateTime:
+    begin
+      Event := YamlEventScalar.Create('', '', YamlDateTimeToStr(Obj.ToDateTime), True, False, yamlDoubleQuotedScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtString:
+    begin
+      Event := YamlEventScalar.Create('', '', Obj.ToString, False, True, yamlDoubleQuotedScalarStyle);
+      Emitter.Emit(Event);
+    end;
+    vtList:
+    begin
+      Event := YamlEventSequenceStart.Create('', '', True, yamlFlowSequenceStyle);
+      Emitter.Emit(Event);
+      LI.Create(Obj);
+      while LI.Next do
+        DumpJsonInternal(Emitter, LI.Value);
+      LI.Destroy;
+      Event := YamlEventSequenceEnd.Create;
+      Emitter.Emit(Event);
+    end;
+    vtMap:
+    begin
+      Event := YamlEventMappingStart.Create('', '', True, yamlFlowMappingStyle);
+      Emitter.Emit(Event);
+      MI.Create(Obj);
+      while MI.Next do
+      begin
+        Event := YamlEventScalar.Create('', '', MI.Key, True, True, yamlDoubleQuotedScalarStyle);
+        Emitter.Emit(Event);
+        DumpJsonInternal(Emitter, MI.Value);
+      end;
+      MI.Destroy;
+      Event := YamlEventMappingEnd.Create;
+      Emitter.Emit(Event);
+    end;
+  end;
+end;
+
 function DumpYamlUtf8(const Obj: CVariant): UTF8String;
 var
   MS: TMemoryStream;
@@ -239,6 +307,37 @@ begin
     Emitter.Emit(Event);
 
     DumpYamlInternal(Emitter, Obj);
+
+    // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
+    // Emitter.Emit(Event);
+    // Event := YamlEventStreamEnd.Create;          // don't write '...'
+    // Emitter.Emit(Event);
+    Emitter.Flush;
+
+    if MS.Size = 0 then
+      Result := ''
+    else
+      SetString(Result, PAnsiChar(MS.Memory), MS.Size);
+  finally
+    FreeAndNil(MS);
+  end;
+end;
+
+function DumpJsonUtf8(const Obj: CVariant): UTF8String;
+var
+  MS: TMemoryStream;
+  Emitter: IYamlEventEmitter;
+  Event: IYamlEvent;
+begin
+  MS := TMemoryStream.Create;
+  try
+    Emitter := YamlEventEmitter.Create(YamlOutput.Create(MS, yamlUtf8Encoding));
+    Event := YamlEventStreamStart.Create(yamlUtf8Encoding);
+    Emitter.Emit(Event);
+    Event := YamlEventDocumentStart.Create(nil, [], True);
+    Emitter.Emit(Event);
+
+    DumpJsonInternal(Emitter, Obj);
 
     // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
     // Emitter.Emit(Event);
@@ -292,6 +391,37 @@ begin
     Emitter.Emit(Event);
 
     DumpYamlInternal(Emitter, Obj);
+
+    // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
+    // Emitter.Emit(Event);
+    // Event := YamlEventStreamEnd.Create;          // don't write '...'
+    // Emitter.Emit(Event);
+    Emitter.Flush;
+
+    if MS.Size = 0 then
+      Result := ''
+    else
+      SetString(Result, PWideChar(MS.Memory) + 1, MS.Size div 2 - 1); // strip BOM
+  finally
+    FreeAndNil(MS);
+  end;
+end;
+
+function DumpJson(const Obj: CVariant): UnicodeString;
+var
+  MS: TMemoryStream;
+  Emitter: IYamlEventEmitter;
+  Event: IYamlEvent;
+begin
+  MS := TMemoryStream.Create;
+  try
+    Emitter := YamlEventEmitter.Create(YamlOutput.Create(MS, yamlUtf16leEncoding));
+    Event := YamlEventStreamStart.Create(yamlUtf16leEncoding);
+    Emitter.Emit(Event);
+    Event := YamlEventDocumentStart.Create(nil, [], True);
+    Emitter.Emit(Event);
+
+    DumpJsonInternal(Emitter, Obj);
 
     // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
     // Emitter.Emit(Event);
