@@ -285,6 +285,7 @@ begin
       if Indent > 0 then
       begin
         Emitter.PutBreak;
+        Emitter.PutWhitespace(CurrentIndent);
       end;
       Event := YamlEventSequenceEnd.Create;
       Emitter.Emit(Event);
@@ -308,6 +309,7 @@ begin
       if Indent > 0 then
       begin
         Emitter.PutBreak;
+        Emitter.PutWhitespace(CurrentIndent);
       end;
       Event := YamlEventMappingEnd.Create;
       Emitter.Emit(Event);
