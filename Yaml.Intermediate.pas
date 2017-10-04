@@ -1468,6 +1468,8 @@ type
   IYamlEventEmitter = interface
   ['{5EB9D30F-C05B-4834-9565-7527B24E655D}']
     procedure Emit(var Event: IYamlEvent);
+    procedure PutBreak;
+    procedure PutWhitespace(Indent: Integer);
     procedure Flush;
   end;
   YamlEventEmitter = class
@@ -3466,6 +3468,8 @@ type
   public
     constructor Create(const Output: IYamlOutput; const Settings: IYamlEmitterSettings);
     destructor Destroy; override;
+    procedure PutBreak;
+    procedure PutWhitespace(Indent: Integer);
     procedure Flush;
   end;
 
@@ -3564,6 +3568,18 @@ begin
   end;
   _yaml_emitter_delete(FEmitter);
   inherited Destroy;
+end;
+
+procedure TYamlEmitterImpl.PutBreak;
+begin
+  if _yaml_delphibridge_put_break(FEmitter) = 0 then
+    RaiseYamlException;
+end;
+
+procedure TYamlEmitterImpl.PutWhitespace(Indent: Integer);
+begin
+  if _yaml_delphibridge_put_whitespace(FEmitter, Indent) = 0 then
+    RaiseYamlException;
 end;
 
 procedure TYamlEmitterImpl.Flush;

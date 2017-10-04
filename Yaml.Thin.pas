@@ -1432,6 +1432,9 @@ function _yaml_emitter_flush(emitter: PYamlEmitter): Integer; cdecl; external;
 
 (** @} *)
 
+function _yaml_delphibridge_put_break(emitter: PYamlEmitter): Integer; cdecl; external;
+function _yaml_delphibridge_put_whitespace(emitter: PYamlEmitter; Indent: Integer): Integer; cdecl; external;
+
 implementation
 
 uses

@@ -19,11 +19,11 @@ uses
 
 function LoadYamlUtf8(const S: Utf8String): CVariant;
 function DumpYamlUtf8(const Obj: CVariant): UTF8String;
-function DumpJsonUtf8(const Obj: CVariant): UTF8String;
+function DumpJsonUtf8(const Obj: CVariant; Indent: Integer = 0): UTF8String;
 
 function LoadYaml(const S: UnicodeString): CVariant;
 function DumpYaml(const Obj: CVariant): UnicodeString;
-function DumpJson(const Obj: CVariant): UnicodeString;
+function DumpJson(const Obj: CVariant; Indent: Integer = 0): UnicodeString;
 
 implementation
 
@@ -226,12 +226,17 @@ begin
   end;
 end;
 
-procedure DumpJsonInternal(const Emitter: IYamlEventEmitter; const Obj: CVariant);
+procedure DumpJsonInternal(const Emitter: IYamlEventEmitter; const Obj: CVariant; Indent: Integer; CurrentIndent: Integer = 0);
 var
   Event: IYamlEvent;
   LI: CListIterator;
   MI: CMapIterator;
 begin
+  if (Indent > 0) and ((Obj.VType = vtMap) or (Obj.VType = vtList)) then
+  begin
+    Emitter.PutWhitespace(CurrentIndent);
+  end;
+
   case Obj.VType of
     vtEmpty, vtNull:
     begin
@@ -269,8 +274,18 @@ begin
       Emitter.Emit(Event);
       LI.Create(Obj);
       while LI.Next do
-        DumpJsonInternal(Emitter, LI.Value);
+      begin
+        if (Indent > 0) and ((LI.Value.VType = vtMap) or (LI.Value.VType = vtList)) then
+        begin
+          Emitter.PutBreak;
+        end;
+        DumpJsonInternal(Emitter, LI.Value, Indent, CurrentIndent + Indent);
+      end;
       LI.Destroy;
+      if Indent > 0 then
+      begin
+        Emitter.PutBreak;
+      end;
       Event := YamlEventSequenceEnd.Create;
       Emitter.Emit(Event);
     end;
@@ -281,11 +296,19 @@ begin
       MI.Create(Obj);
       while MI.Next do
       begin
+        if (Indent > 0) and ((LI.Value.VType = vtMap) or (LI.Value.VType = vtList)) then
+        begin
+          Emitter.PutBreak;
+        end;
         Event := YamlEventScalar.Create('', '', MI.Key, True, True, yamlDoubleQuotedScalarStyle);
         Emitter.Emit(Event);
-        DumpJsonInternal(Emitter, MI.Value);
+        DumpJsonInternal(Emitter, MI.Value, Indent, CurrentIndent + Indent);
       end;
       MI.Destroy;
+      if Indent > 0 then
+      begin
+        Emitter.PutBreak;
+      end;
       Event := YamlEventMappingEnd.Create;
       Emitter.Emit(Event);
     end;
@@ -323,7 +346,7 @@ begin
   end;
 end;
 
-function DumpJsonUtf8(const Obj: CVariant): UTF8String;
+function DumpJsonUtf8(const Obj: CVariant; Indent: Integer = 0): UTF8String;
 var
   MS: TMemoryStream;
   Emitter: IYamlEventEmitter;
@@ -337,7 +360,7 @@ begin
     Event := YamlEventDocumentStart.Create(nil, [], True);
     Emitter.Emit(Event);
 
-    DumpJsonInternal(Emitter, Obj);
+    DumpJsonInternal(Emitter, Obj, Indent);
 
     // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
     // Emitter.Emit(Event);
@@ -407,7 +430,7 @@ begin
   end;
 end;
 
-function DumpJson(const Obj: CVariant): UnicodeString;
+function DumpJson(const Obj: CVariant; Indent: Integer = 0): UnicodeString;
 var
   MS: TMemoryStream;
   Emitter: IYamlEventEmitter;
@@ -421,7 +444,7 @@ begin
     Event := YamlEventDocumentStart.Create(nil, [], True);
     Emitter.Emit(Event);
 
-    DumpJsonInternal(Emitter, Obj);
+    DumpJsonInternal(Emitter, Obj, Indent);
 
     // Event := YamlEventDocumentEnd.Create(True);  // don't write end of line
     // Emitter.Emit(Event);
